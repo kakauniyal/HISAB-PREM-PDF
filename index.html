@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HISAB PREM — Final</title>
+
+  <script>
+  window.firebaseConfig = {
+    apiKey: "AIzaSyAfP_apTB0_kpkUr9SVbz_XoZPm6oaB8Uk",
+    authDomain: "hisab-prem.firebaseapp.com",
+    projectId: "hisab-prem",
+    storageBucket: "hisab-prem.firebasestorage.app",
+    messagingSenderId: "535549893001",
+    appId: "1:535549893001:web:6d92d8f01e1dca83d4a958"
+  };
+  </script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/2.9.0/dom-to-image-more.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#071117; --card:#0b1113; --accent:#1e6bf0; --green:#24c28b; --red:#ff6b6b; --muted:#98a2a6; --text:#eaf2f5;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#041018);color:var(--text);-webkit-font-smoothing:antialiased}
+    .appbar{display:flex;align-items:center;padding:12px 16px;background:linear-gradient(90deg,var(--accent),#1e88e5);box-shadow:0 6px 20px rgba(0,0,0,0.45)}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo svg{width:44px;height:44px}
+    .title{font-weight:700;font-size:18px}
+    .time{margin-left:auto;font-weight:600;font-size:13px;color:rgba(255,255,255,0.95)}
+    .container{max-width:980px;margin:14px auto;padding:0 16px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));border-radius:12px;padding:14px;box-shadow:0 10px 36px rgba(0,0,0,0.5)}
+    .balanceRow{display:flex;gap:16px;align-items:center}
+    .balanceLeft{flex:1}
+    .balanceTitle{font-size:13px;color:#cfeee4}
+    .balanceAmt{font-weight:800;font-size:28px;margin-top:6px}
+    .ratio{height:12px;background:#081217;border-radius:999px;margin-top:10px;position:relative;overflow:hidden}
+    .ratio .in{height:100%;background:linear-gradient(90deg,var(--green),#16a06f);width:50%}
+    .ratio .out{height:100%;background:linear-gradient(90deg,var(--red),#ff7b7b);position:absolute;right:0;top:0;width:50%}
+    .summary{display:flex;gap:10px;margin-top:12px}
+    .summary .box{flex:1;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:700}
+    .chartWrap{margin-top:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.03))}
+    /* CHART SIZE: Smallest size, constrained by max-width/height of 300px */
+    #chartSmall{width:100%;height:100%;display:block; max-width:300px; max-height:300px; margin:0 auto;}
+
+/* mid control row */
+    .midControls{display:flex;align-items:center;gap:10px;margin-top:12px}
+    .smallBtn{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);font-weight:700;cursor:pointer}
+    .smallBtn.in{background:linear-gradient(90deg,var(--green),#12a76a);color:#042216}
+    .smallBtn.out{background:linear-gradient(90deg,var(--red),#ef6b6b);color:#2b0f0f}
+    .syncStatus{margin-left:auto;font-size:13px;color:var(--muted);font-weight:600}
+
+/* export button small */
+    .exportBtn{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:var(--text);font-weight:700;cursor:pointer;margin-left:8px}
+
+/* lists */
+    .list{margin-top:14px;display:flex;flex-direction:column;gap:12px;padding-bottom:120px}
+    .tile{display:flex;justify-content:space-between;align-items:flex-start;padding:14px;border-radius:10px;background:linear-gradient(180deg,#071116,#071216);box-shadow:0 8px 22px rgba(0,0,0,0.6);border-left:8px solid transparent}
+    .leftCol{flex:1;padding-right:12px}
+    .amount{font-weight:800;font-size:20px}
+    .note{margin-top:6px;font-weight:700;font-size:14px;color:var(--text);white-space:pre-wrap}
+    .meta small{display:block;color:var(--muted);margin-top:8px}
+    .tile.in{border-left-color:var(--green)}
+    .tile.out{border-left-color:var(--red)}
+    .actionsCol{display:flex;flex-direction:column;gap:8px;margin-left:12px}
+    .iconBtn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
+    .iconBtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6}
+
+/* floating add */
+    .fab{position:fixed;right:16px;bottom:18px;width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--green),#13a76b);display:flex;align-items:center;justify-content:center;color:#042216;font-size:32px;box-shadow:0 18px 48px rgba(15,50,30,0.35);border:4px solid rgba(255,255,255,0.03);cursor:pointer;z-index:200}
+
+/* modal */
+    .modal{display:none;position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:150}
+    .modalCard{width:92%;max-width:520px;background:linear-gradient(180deg,#071417,#07181a);border-radius:12px;padding:16px;box-shadow:0 28px 80px rgba(0,0,0,0.7)}
+    .input{width:100%;padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:inherit;margin-top:8px;font-size:18px;font-weight:600}
+
+/* hidden helpers */
+    .hidden{display:none!important}
+    .center{display:flex;align-items:center;justify-content:center}
+    /* responsive tweaks */
+    @media (max-width:700px){
+      .container{padding:0 12px}
+      .fab{right:12px;bottom:14px}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="appbar">
+    <div class="logo" aria-hidden>
+      <svg viewBox="0 0 140 60" xmlns="http://www.w3.org/2000/svg"><g transform="translate(6,6)"><text x="0" y="16" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#fff">HISAB</text><text x="0" y="36" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#fff">PREM</text></g></svg>
+    </div>
+    <div style="margin-left:10px">
+      <div class="title">HISAB PREM</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.95)">Shared • No Login</div>
+    </div>
+    <div class="time" id="appTime">--:--</div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="balanceRow">
+        <div class="balanceLeft">
+          <div class="balanceTitle">Current Balance</div>
+          <div id="balanceAmt" class="balanceAmt">₹0</div>
+          <div class="ratio" aria-hidden><div id="ratioIn" class="in" style="width:50%"></div><div id="ratioOut" class="out" style="width:50%"></div></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;color:var(--muted)">Overview</div>
+          <div style="margin-top:6px"><small class="meta" id="collectionInfo">Collection: entries</small></div>
+        </div>
+      </div>
+
+      <div class="summary" style="margin-top:12px">
+        <div class="box">Cash In<br/><div id="sumIn" style="font-size:18px;margin-top:6px">₹0</div></div>
+        <div class="box">Cash Out<br/><div id="sumOut" style="font-size:18px;margin-top:6px">₹0</div></div>
+        <div class="box">Balance<br/><div id="sumBal" style="font-size:18px;margin-top:6px">₹0</div></div>
+      </div>
+
+      <div class="chartWrap">
+        <canvas id="chartSmall" width="150" height="150"></canvas>
+      </div>
+
+      <div class="midControls">
+        <button class="smallBtn in" id="btnQuickIn">Cash In</button>
+        <button class="smallBtn out" id="btnQuickOut">Cash Out</button>
+        <div class="syncStatus" id="syncStatus">Offline</div>
+
+        <button id="exportBtn" class="exportBtn" title="Export PDF">📄 Export</button>
+      </div>
+    </div>
+
+    <div id="page-in" class="page">
+      <h3 style="margin-top:18px">Recent Cash In</h3>
+      <div id="listIn" class="list"></div>
+    </div>
+
+    <div id="page-out" class="page hidden">
+      <h3 style="margin-top:18px">Recent Cash Out</h3>
+      <div id="listOut" class="list"></div>
+    </div>
+  </div>
+
+  <button class="fab" id="fabAdd" aria-label="Add">+</button>
+
+  <div class="modal" id="modalAdd" aria-hidden>
+    <div class="modalCard" role="dialog" aria-modal="true">
+      <h3 id="modalTitle">Add / Edit Entry</h3>
+      <select id="typeSel" class="input">
+        <option value="in">Cash In</option>
+        <option value="out">Cash Out</option>
+      </select>
+      <input id="amtInp" class="input" type="text" placeholder="Amount (₹)" />
+      <input id="noteInp" class="input" type="text" placeholder="Note (optional)" />
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+        <button id="saveBtn" class="input"
+          style="background:linear-gradient(135deg,var(--green),#13a76b);color:#042216;font-weight:800">
+          Save
+        </button>
+        <button id="cancelBtn" class="input"
+          style="background:transparent;border:1px solid rgba(255,255,255,0.03)">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="printArea" style="display:none"></div>
+
+  <script>
+    /* ===========================
+       HISAB PREM — Final single file
+       - Keeps your app logic intact
+       - Only adds polished Export PDF feature
+       - Combined table (In + Out), wrapped remarks, 4-side border
+       - Auto download: HISAB_PREM_Statement.pdf
+       =========================== */
+
+    /* --- State & Helpers --- */
+    const COLLECTION = 'entries';
+    const LOCAL_IN = 'hisabprem_in';
+    const LOCAL_OUT = 'hisabprem_out';
+    let entriesIn = [];
+    let entriesOut = [];
+    let db = null;
+    let fsReady = false;
+    let editingItem = null;
+
+    const qs = sel => document.querySelector(sel) ;
+    function nowStr(ts){ return new Date(ts||Date.now()).toLocaleString(); }
+    function safeNum(v){ const n = Number(v); return Number.isFinite(n) ? n : null; }
+    function fmt(n){ return Number(n).toLocaleString(); }
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    /* --- DOM refs --- */
+    const listInEl = qs('#listIn');
+    const listOutEl = qs('#listOut');
+    const sumInEl = qs('#sumIn');
+    const sumOutEl = qs('#sumOut');
+    const sumBalEl = qs('#sumBal');
+    const balanceAmtEl = qs('#balanceAmt');
+    const ratioInEl = qs('#ratioIn');
+    const ratioOutEl = qs('#ratioOut');
+    const syncStatusEl = qs('#syncStatus');
+    const appTimeEl = qs('#appTime');
+    const modal = qs('#modalAdd');
+    const fab = qs('#fabAdd');
+    const btnQuickIn = qs('#btnQuickIn');
+    const btnQuickOut = qs('#btnQuickOut');
+    const saveBtn = qs('#saveBtn');
+    const cancelBtn = qs('#cancelBtn');
+    const typeSel = qs('#typeSel');
+    const amtInp = qs('#amtInp');
+    const noteInp = qs('#noteInp');
+    const modalTitle = qs('#modalTitle');
+    const exportBtn = qs('#exportBtn');
+
+    /* Live time */
+    function tickTime(){ appTimeEl.textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:true}); }
+    setInterval(tickTime,1000); tickTime();
+
+    /* Local storage */
+    function loadLocal(){
+      try{
+        const a = JSON.parse(localStorage.getItem(LOCAL_IN) || 'null');
+        const b = JSON.parse(localStorage.getItem(LOCAL_OUT) || 'null');
+        entriesIn = Array.isArray(a) ? a : [];
+        entriesOut = Array.isArray(b) ? b : [];
+      }catch(e){ entriesIn = []; entriesOut = []; console.warn('loadLocal', e); }
+    }
+    function persistLocal(){
+      try{
+        localStorage.setItem(LOCAL_IN, JSON.stringify(entriesIn));
+        localStorage.setItem(LOCAL_OUT, JSON.stringify(entriesOut));
+      }catch(e){ console.warn('persistLocal', e); }
+    }
+
+    /* Seed defaults (only if empty) */
+    function seedDefaults(){
+      if(entriesIn.length===0 && entriesOut.length===0){
+        entriesIn = [
+          { id:1696940046000, amount:2479, note:'ICICI BANK', date:'10/09/2025, 10:34:25 PM', updatedAt:1696940046000, type:'in' },
+          { id:1696940065000, amount:4609, note:'Pankaj fk', date:'10/09/2025, 10:34:06 PM', updatedAt:1696940065000, type:'in' },
+          { id:1696940368000, amount:3749, note:'Phone pe', date:'10/11/2025, 6:40:15 PM', updatedAt:1696940368000, type:'in' },
+          { id:1697140797000, amount:11259, note:'SBI CC', date:'10/11/2025, 11:56:54 AM', updatedAt:1697140797000, type:'in' },
+          { id:1697022661000, amount:10000, note:'VERSHA ICICI 1081843-41 vibhi 10k vibhi in yes', date:'10/10/2025, 11:11:01 AM', updatedAt:1697022661000, type:'in' }
+        ];
+        entriesOut = [
+          { id:1697143997000, amount:16400, note:'VERSHA SBI CC Bill bnega 22 OCT', date:'10/11/2025, 11:59:57 AM', updatedAt:1697143997000, type:'out' },
+          { id:1696940875000, amount:2000, note:'Online extra', date:'10/09/2025, 11:47:55 PM', updatedAt:1696940875000, type:'out' },
+          { id:1696940417000, amount:5000, note:'Diwali', date:'10/09/2025, 10:40:17 PM', updatedAt:1696940417000, type:'out' },
+          { id:1696940402000, amount:2500, note:'Petrol', date:'10/09/2025, 10:40:02 PM', updatedAt:1696940402000, type:'out' },
+          { id:1696943928000, amount:700, note:'RAJU CB', date:'10/09/2025, 10:39:28 PM', updatedAt:1696943928000, type:'out' },
+          { id:1696944679000, amount:1, note:'9.43 PL A +10.43 PL B =19.73 1L se 1 SB LOAN 7.90 pnb+10.40 fd ver+1.43 fd prem=19.73', date:'10/09/2025, 11:51:19 PM', updatedAt:1696944679000, type:'out' }
+        ];
+        persistLocal();
+      }
+    }
+
+    /* --- Render --- */
+    function tileHTML(e){
+      const note = escapeHtml(e.note || '');
+      const date = escapeHtml(e.date || nowStr());
+      const amount = fmt(e.amount || 0);
+      const cls = e.type === 'out' ? 'out' : 'in';
+      return `<div class="tile ${cls}" data-id="${e.id}">
+        <div class="leftCol">
+          <div class="amount">₹${amount}</div>
+          <div class="note">${note || '&nbsp;'}</div>
+          <div class="meta"><small>${date}</small></div>
+        </div>
+        <div class="actionsCol">
+          <button class="iconBtn" title="Edit" onclick="openEdit('${e.id}','${e.type}')">
+            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="iconBtn" title="Delete" onclick="deleteEntry('${e.id}','${e.type}')">
+            <svg viewBox="0 0 24 24"><path d="M3 6h18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>`;
+    }
+    function renderLists(){
+      listInEl.innerHTML = '';
+      listOutEl.innerHTML = '';
+      if(entriesIn.length === 0) listInEl.innerHTML = '<div style="color:var(--muted);padding:12px;border-radius:10px">No Cash In entries</div>';
+      else entriesIn.forEach(e => listInEl.insertAdjacentHTML('beforeend', tileHTML(e)));
+      if(entriesOut.length === 0) listOutEl.innerHTML = '<div style="color:var(--muted);padding:12px;border-radius:10px">No Cash Out entries</div>';
+      else entriesOut.forEach(e => listOutEl.insertAdjacentHTML('beforeend', tileHTML(e)));
+    }
+    function renderSummary(){
+      const totalIn = entriesIn.reduce((s,x)=>s + (Number(x.amount)||0),0);
+      const totalOut = entriesOut.reduce((s,x)=>s + (Number(x.amount)||0),0);
+      sumInEl.textContent = '₹' + fmt(totalIn);
+      sumOutEl.textContent = '₹' + fmt(totalOut);
+      sumBalEl.textContent = '₹' + fmt(totalIn - totalOut);
+      balanceAmtEl.textContent = '₹' + fmt(totalIn - totalOut);
+      const total = (totalIn + totalOut) || 1;
+      // ratio elements may not exist in DOM (kept for backward compat)
+      if(ratioInEl) ratioInEl.style.width = Math.round((totalIn/total)*100) + '%';
+      if(ratioOutEl) ratioOutEl.style.width = Math.round((totalOut/total)*100) + '%';
+    }
+    function renderChart(){
+      try{
+        const ctx = document.getElementById('chartSmall').getContext('2d');
+        const totalIn = entriesIn.reduce((s,x)=>s + (Number(x.amount)||0),0);
+        const totalOut = entriesOut.reduce((s,x)=>s + (Number(x.amount)||0),0);
+        if(window._donut) window._donut.destroy();
+        // ensure canvas is square for consistent export
+        const canvas = document.getElementById('chartSmall');
+        // CHART SIZE FIX: Setting canvas width/height to 150px for consistent small size
+        canvas.width = 150; 
+        canvas.height = 150;
+        window._donut = new Chart(ctx,{
+          type:'doughnut',
+          data:{ labels:['Cash In','Cash Out'], datasets:[{ data:[totalIn,totalOut], backgroundColor:['#24c28b','#ff6b6b'] }]},
+          options:{ responsive:false, maintainAspectRatio:false, cutout:'70%', plugins:{legend:{display:false}}}
+        });
+      }catch(e){ console.warn('chart', e); }
+    }
+    function renderAll(){ renderSummary(); renderLists(); renderChart(); updateSyncStatus(); }
+
+    /* --- Add / Edit / Delete --- */
+    function openAdd(type='in'){
+      editingItem = null;
+      modalTitle.textContent = 'Add Entry';
+      typeSel.value = type;
+      amtInp.value = '';
+      noteInp.value = '';
+      // ensure no duplicate modal visibility
+      document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      setTimeout(()=>{ try{ amtInp.focus(); }catch(e){} },50);
+    }
+    function openEdit(id, type){
+      const list = type === 'in' ? entriesIn : entriesOut;
+      const e = list.find(x=>String(x.id) === String(id));
+      if(!e) return;
+      editingItem = { id: e.id, type };
+      modalTitle.textContent = 'Edit Entry';
+      typeSel.value = type;
+      amtInp.value = String(e.amount || '');
+      noteInp.value = e.note || '';
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      setTimeout(()=>{ try{ amtInp.focus(); }catch(e){} },50);
+    }
+    function closeModal(){
+      modal.style.display = 'none';
+      editingItem = null;
+      document.body.style.overflow = '';
+    }
+    async function saveEntry(){
+      // support expression evaluation if user typed arithmetic (data-result already set on blur)
+      let amtVal = amtInp.value || '';
+      const dr = amtInp.getAttribute('data-result');
+      if(dr !== null && dr !== undefined && dr !== '') amtVal = dr;
+      const amt = safeNum(amtVal);
+      const note = (noteInp.value || '').trim();
+      const type = typeSel.value === 'out' ? 'out' : 'in';
+      if(amt === null || amt <= 0) { amtInp.focus(); return; }
+      const now = Date.now();
+      if(editingItem){
+        if(editingItem.type === 'in') entriesIn = entriesIn.filter(x=>String(x.id) !== String(editingItem.id));
+        else entriesOut = entriesOut.filter(x=>String(x.id) !== String(editingItem.id));
+        const obj = { id: editingItem.id, amount: amt, note, date: nowStr(now), updatedAt: now, type };
+        if(type === 'in') entriesIn.unshift(obj); else entriesOut.unshift(obj);
+      } else {
+        const id = now;
+        const obj = { id, amount: amt, note, date: nowStr(now), updatedAt: now, type };
+        if(type === 'in') entriesIn.unshift(obj); else entriesOut.unshift(obj);
+      }
+      persistLocal();
+      renderAll();
+      closeModal();
+      if(fsReady && navigator.onLine) {
+        try{ await writeToFirestoreRecent(); } catch(e){ console.warn('autosync fail', e); }
+      }
+    }
+
+    /* delete immediate (no confirm) */
+    async function deleteEntry(id, type){
+      if(type === 'in') entriesIn = entriesIn.filter(x=>String(x.id) !== String(id));
+      else entriesOut = entriesOut.filter(x=>String(x.id) !== String(id));
+      persistLocal();
+      renderAll();
+      if(fsReady && navigator.onLine){
+        try{ await db.collection(COLLECTION).doc(String(id)).delete().catch(()=>{}); } catch(e){ console.warn('fs delete fail', e); }
+      }
+    }
+
+    /* --- Firestore init & sync --- */
+    async function initFirestore(){
+      try{
+        const cfg = window.firebaseConfig || null;
+        if(!cfg || !cfg.apiKey){ fsReady = false; updateSyncStatus(); return; }
+        firebase.initializeApp(cfg);
+        db = firebase.firestore();
+        fsReady = true;
+        updateSyncStatus();
+        db.collection(COLLECTION).orderBy('updatedAt','desc').onSnapshot(snapshot=>{
+          const remote = [];
+          snapshot.forEach(doc=>{
+            const d = doc.data() || {};
+            const amt = safeNum(d.amount);
+            const type = (d.type === 'out') ? 'out' : (d.type === 'in' ? 'in' : null);
+            if(amt === null || type === null) return; // ignore invalid
+            remote.push({ id: d.id || doc.id, amount: amt, note: d.note || '', date: d.date || nowStr(), updatedAt: d.updatedAt || Date.now(), type });
+          });
+          if(remote.length > 0){
+            entriesIn = remote.filter(r=>r.type==='in').sort((a,b)=>b.updatedAt - a.updatedAt);
+            entriesOut = remote.filter(r=>r.type==='out').sort((a,b)=>b.updatedAt - a.updatedAt);
+            persistLocal();
+            renderAll();
+          }
+          updateSyncStatus();
+        }, err=>{
+          console.warn('fs snapshot err', err);
+          updateSyncStatus();
+        });
+      }catch(e){ console.warn('initFirestore', e); fsReady = false; updateSyncStatus(); }
+    }
+    async function writeToFirestoreRecent(){
+      if(!fsReady || !db) return;
+      try{
+        const all = entriesIn.concat(entriesOut);
+        for(const it of all){
+          if(!it || !it.id) continue;
+          const amt = safeNum(it.amount);
+          if(amt === null) continue;
+          const payload = { id: Number(it.id), amount: Number(amt), note: it.note || '', date: it.date || nowStr(), updatedAt: it.updatedAt || Date.now(), type: it.type || 'in' };
+          await db.collection(COLLECTION).doc(String(payload.id)).set(payload, { merge:true });
+        }
+        updateSyncStatus(true);
+      }catch(e){ console.warn('writeToFirestoreRecent', e); updateSyncStatus(false); }
+    }
+
+    /* --- Sync status text (no alerts) --- */
+    let _syncTimer = null;
+    function updateSyncStatus(onlineState){
+      const online = (typeof onlineState === 'boolean') ? onlineState : (fsReady && navigator.onLine);
+      if(!fsReady){ syncStatusEl.textContent = navigator.onLine ? 'Online (No Firebase)' : 'Offline'; return; }
+      if(!navigator.onLine){ syncStatusEl.textContent = 'Offline'; return; }
+      if(_writingFlag){
+        syncStatusEl.textContent = 'Syncing...';
+        clearTimeout(_syncTimer);
+        _syncTimer = setTimeout(()=>{ syncStatusEl.textContent = 'Synced'; }, 900);
+      } else {
+        syncStatusEl.textContent = 'Synced';
+      }
+    }
+    let _writingFlag = false;
+    function setWritingFlag(on){
+      _writingFlag = !!on;
+      updateSyncStatus();
+    }
+
+    /* --- Calculator logic for amount field --- */
+    amtInp.addEventListener("input", (e) => {
+      const val = e.target.value;
+      try {
+        if (/^[0-9+\-*/.() ]+$/.test(val)) {
+          const calc = Function("return " + val)();
+          if (!isNaN(calc)) e.target.setAttribute("data-result", calc);
+          else e.target.removeAttribute("data-result");
+        } else {
+          e.target.removeAttribute("data-result");
+        }
+      } catch {
+        e.target.removeAttribute("data-result");
+      }
+    });
+    amtInp.addEventListener("blur", (e) => {
+      const res = e.target.getAttribute("data-result");
+      if (res !== null && res !== undefined) {
+        const n = Number(res);
+        e.target.value = Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+      }
+    });
+
+    /* --- EXPORT PDF (final, fixed) --- */
+    async function exportPDF(){
+      try{
+        // combined entries
+        const combined = (entriesIn || []).concat(entriesOut || []);
+        if(!combined || combined.length === 0){
+          alert('No entries to export');
+          return;
+        }
+
+        // Build printable container (white A4-like)
+        const print = document.getElementById('printArea');
+        print.innerHTML = '';
+
+        // outer container with 4-side border
+        const container = document.createElement('div');
+        // Width set for a large buffer on the right
+        container.style.width = '720px'; 
+        container.style.background = '#ffffff';
+        container.style.padding = '18px';
+        // Explicit blue border
+        container.style.border = '4px solid #1e6bf0'; 
+        container.style.borderRadius = '8px';
+        container.style.boxSizing = 'border-box';
+        container.style.color = '#111';
+        container.style.fontFamily = 'Arial, Helvetica, sans-serif';
+        container.style.fontSize = '12px';
+
+        // header
+        const header = document.createElement('div');
+        header.style.display='flex';
+        header.style.justifyContent='space-between';
+        header.style.alignItems='flex-start';
+        header.style.marginBottom='12px';
+        header.innerHTML = `<div style="display:flex;align-items:center;gap:12px">
+          <svg width="120" height="40" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <g transform="translate(6,6)">
+              <text x="0" y="18" font-family="Inter, Arial" font-size="18" font-weight="700" fill="#0b3db8">HISAB</text>
+              <text x="0" y="40" font-family="Inter, Arial" font-size="18" font-weight="700" fill="#0b3db8">PREM</text>
+            </g>
+          </svg>
+        </div>`;
+        const genDate = new Date().toLocaleString();
+        header.innerHTML += `<div style="text-align:right;max-width:340px;word-break:break-word">
+          <div style="font-weight:800;color:#0b3db8;font-size:16px;white-space:normal">Account Statement</div>
+          <div style="font-size:11px;color:#333;margin-top:6px">Generated: ${genDate}</div>
+        </div>`;
+        container.appendChild(header);
+
+        // summary
+        const inTotal = entriesIn.reduce((s,x)=>s+Number(x.amount||0),0);
+        const outTotal = entriesOut.reduce((s,x)=>s+Number(x.amount||0),0);
+        const balance = inTotal - outTotal;
+        const summary = document.createElement('div');
+        summary.style.display='flex';
+        summary.style.gap='10px';
+        summary.style.marginBottom='12px';
+        summary.innerHTML = `<div style="flex:1;padding:10px;background:#f7f9ff;border-radius:6px;border:1px solid #eef7ff;text-align:center"><div style="font-size:12px;color:#444">Cash In</div><div style="font-weight:700;margin-top:6px;color:#111">₹${inTotal.toLocaleString()}</div></div>
+          <div style="flex:1;padding:10px;background:#fff7f7;border-radius:6px;border:1px solid #fff0f0;text-align:center"><div style="font-size:12px;color:#444">Cash Out</div><div style="font-weight:700;margin-top:6px;color:#111">₹${outTotal.toLocaleString()}</div></div>
+          <div style="flex:1;padding:10px;background:#f7fbff;border-radius:6px;border:1px solid #eaf4ff;text-align:center"><div style="font-size:12px;color:#444">Balance</div><div style="font-weight:700;margin-top:6px;color:#111">₹${balance.toLocaleString()}</div></div>`;
+        container.appendChild(summary);
+
+        // chart (square) + legend
+        try {
+          const canvas = document.getElementById('chartSmall');
+          if(canvas){
+            // Use the export size set in renderChart (150x150) for the image capture.
+            const img = new Image();
+            img.src = canvas.toDataURL('image/png');
+            // Display size of the chart in the PDF
+            img.style.width='100px';
+            img.style.height='100px';
+            img.style.display='block';
+            img.style.objectFit='contain';
+            img.style.margin='0 auto 8px';
+            container.appendChild(img);
+
+            // legend under chart (center)
+            const legend = document.createElement('div');
+            legend.style.display = 'flex';
+            legend.style.justifyContent = 'center';
+            legend.style.gap = '20px';
+            legend.style.marginBottom = '8px';
+            legend.innerHTML = `<div style="display:flex;align-items:center;gap:6px;font-size:13px"><span style="width:14px;height:14px;border-radius:50%;background:#24c28b;display:inline-block"></span> Cash In</div>
+                                <div style="display:flex;align-items:center;gap:6px;font-size:13px"><span style="width:14px;height:14px;border-radius:50%;background:#ff6b6b;display:inline-block"></span> Cash Out</div>`;
+            container.appendChild(legend);
+          }
+        } catch(e){ console.warn('chart capture', e); }
+
+        // table
+        const table = document.createElement('table');
+        table.style.width='100%';
+        table.style.borderCollapse='collapse';
+        table.style.fontSize='12px';
+        table.style.marginTop='12px';
+        // Using safer widths and padding
+        table.innerHTML = `<thead><tr style="background:#f0f6ff"><th style="border:1px solid #e6f3ff;padding:6px;text-align:left;width:150px">Date / Time</th><th style="border:1px solid #e6f3ff;padding:6px;text-align:left;width:90px">Type</th><th style="border:1px solid #e6f3ff;padding:6px;text-align:right;width:90px">Amount (₹)</th><th style="border:1px solid #e6f3ff;padding:6px;text-align:left">Note</th></tr></thead>`;
+        const tbody = document.createElement('tbody');
+
+        // combine & sort
+        const combinedAll = (entriesIn || []).map(e=>({...e,_type:'Cash In'})).concat((entriesOut || []).map(e=>({...e,_type:'Cash Out'})));
+        combinedAll.sort((a,b)=> (b.updatedAt || b.id || 0) - (a.updatedAt || a.id || 0));
+        combinedAll.forEach(r=>{
+          const tr = document.createElement('tr');
+          // Using safer padding
+          tr.innerHTML = `<td style="border:1px solid #eef7ff;padding:6px;color:#111;vertical-align:top">${escapeHtml(r.date || nowStr(r.updatedAt))}</td>
+            <td style="border:1px solid #eef7ff;padding:6px;color:#111;vertical-align:top">${r._type}</td>
+            <td style="border:1px solid #eef7ff;padding:6px;color:#111;text-align:right;vertical-align:top">₹${Number(r.amount).toLocaleString()}</td>
+            <td style="border:1px solid #eef7ff;padding:6px;color:#111;vertical-align:top;white-space:normal;word-break:break-word;max-width:420px">${escapeHtml(r.note || '')}</td>`;
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        container.appendChild(table);
+
+        // footer
+        const footer = document.createElement('div');
+        footer.style.fontSize = '11px';
+        footer.style.color = '#666';
+        footer.style.marginTop = '12px';
+        footer.style.textAlign = 'center';
+        footer.textContent = 'Generated by HISAB PREM — Combined statement of Cash In and Cash Out.';
+        container.appendChild(footer);
+
+        print.appendChild(container);
+        print.style.display='block';
+        print.style.padding='12px';
+        print.style.background='#ffffff';
+
+        // Export using html2pdf: use the container element
+        const filename = 'HISAB_PREM_Statement.pdf';
+        const opt = {
+          margin:       [8, 8, 8, 8],
+          filename:     filename,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true, allowTaint: true },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Use html2pdf on the container directly
+        await html2pdf().set(opt).from(container).save();
+
+        // cleanup
+        print.style.display='none';
+        print.innerHTML = '';
+      }catch(err){
+        console.error('exportPDF error', err);
+        alert('PDF export failed. Check console for details.');
+      }
+    }
+
+    /* --- init / start --- */
+    window.addEventListener('load', ()=>{
+      // ensure modal hidden on load (fixes popup-on-refresh bug)
+      const addModal = document.getElementById('modalAdd');
+      if(addModal) addModal.style.display = 'none';
+      loadLocal();
+      seedDefaults();
+      renderAll();
+      initFirestore();
+    });
+
+    /* --- UI bindings --- */
+    window.openEdit = openEdit;
+    window.deleteEntry = deleteEntry;
+    window.navigate = function(p){
+      if(p === 'out'){
+        qs('#page-in').classList.add('hidden');
+        qs('#page-out').classList.remove('hidden');
+        btnQuickIn.classList.remove('active');
+        btnQuickOut.classList.add('active');
+      } else {
+        qs('#page-out').classList.add('hidden');
+        qs('#page-in').classList.remove('hidden');
+        btnQuickOut.classList.remove('active');
+        btnQuickIn.classList.add('active');
+      }
+    };
+
+    /* UI events */
+    fab.addEventListener('click', ()=> openAdd('in'));
+    btnQuickIn.addEventListener('click', ()=>{ navigate('in'); });
+    btnQuickOut.addEventListener('click', ()=>{ navigate('out'); });
+    cancelBtn.addEventListener('click', closeModal);
+    saveBtn.addEventListener('click', async ()=>{
+      setWritingFlag(true);
+      await saveEntry();
+      setTimeout(()=> setWritingFlag(false), 1000);
+    });
+    modal.addEventListener('click', (ev)=>{ if(ev.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeModal(); });
+
+    window.addEventListener('online', ()=>{
+      if(fsReady) {
+        setWritingFlag(true);
+        writeToFirestoreRecent().then(()=> setWritingFlag(false)).catch(()=> setWritingFlag(false));
+      }
+      updateSyncStatus();
+    });
+    window.addEventListener('offline', updateSyncStatus);
+
+    /* export button handler */
+    if(exportBtn) exportBtn.addEventListener('click', exportPDF);
+
+    /* expose for templates */
+    window.openEdit = openEdit;
+    window.deleteEntry = deleteEntry;
+    window.hisabExportPDF = exportPDF;
+
+  </script>
+</body>
+</html>
