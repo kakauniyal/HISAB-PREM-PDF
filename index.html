@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>HISAB PREM — Firebase Login</title>
+  <title>HISAB PREM — Professional Online</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/2.9.0/dom-to-image-more.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
   
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   
@@ -19,223 +19,231 @@
       --bg:#071117; --card:#0b1113; --accent:#1e6bf0; --green:#24c28b; --red:#ff6b6b; --muted:#98a2a6; --text:#eaf2f5;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#041018);color:var(--text);-webkit-font-smoothing:antialiased}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
     
-    /* Appbar Styling */
     .appbar{display:flex;align-items:center;padding:12px 16px;background:linear-gradient(90deg,var(--accent),#1e88e5);box-shadow:0 6px 20px rgba(0,0,0,0.45)}
-    .logo{display:flex;align-items:center;gap:10px}
-    .logo svg{width:44px;height:44px}
-    .title{font-weight:700;font-size:18px}
     .user-profile { margin-left: auto; display: flex; align-items: center; gap: 10px; }
     .user-img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; }
     
-    /* Dashboard & Cards */
     .container{max-width:980px;margin:14px auto;padding:0 16px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));border-radius:12px;padding:14px;box-shadow:0 10px 36px rgba(0,0,0,0.5)}
-    .balanceRow{display:flex;gap:16px;align-items:center}
-    .balanceAmt{font-weight:800;font-size:28px;margin-top:6px}
-    .summary{display:flex;gap:10px;margin-top:12px}
-    .box{flex:1;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:700}
+    .card{background:rgba(255,255,255,0.03);border-radius:12px;padding:20px;box-shadow:0 10px 36px rgba(0,0,0,0.5)}
     
-    /* Buttons */
-    .smallBtn{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);font-weight:700;cursor:pointer}
-    .smallBtn.in{background:linear-gradient(90deg,var(--green),#12a76a);color:#042216}
-    .smallBtn.out{background:linear-gradient(90deg,var(--red),#ef6b6b);color:#2b0f0f}
-    .exportBtn{padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.02);color:var(--text);font-weight:700;cursor:pointer;margin-left:8px;border:1px solid rgba(255,255,255,0.08)}
+    .summary{display:flex;gap:10px;margin-top:20px}
+    .box{flex:1;padding:15px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05)}
     
-    /* List & Tiles */
-    .list{margin-top:14px;display:flex;flex-direction:column;gap:12px;padding-bottom:120px}
-    .tile{display:flex;justify-content:space-between;padding:14px;border-radius:10px;background:#071116;box-shadow:0 8px 22px rgba(0,0,0,0.6);border-left:8px solid transparent}
+    .list{margin-top:20px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px}
+    .tile{display:flex;justify-content:space-between;align-items:center;padding:15px;border-radius:10px;background:#0b1113;border-left:5px solid transparent}
     .tile.in{border-left-color:var(--green)}
     .tile.out{border-left-color:var(--red)}
-    .iconBtn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
     
-    /* Modals */
-    .modal{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:150}
-    .modalCard{width:92%;max-width:520px;background:#071417;border-radius:12px;padding:16px}
-    .input{width:100%;padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:inherit;margin-top:8px;font-size:18px}
+    .action-group{display:flex; gap:10px;}
+    .iconBtn{background:none; border:none; cursor:pointer; font-size:18px; padding:5px; transition: 0.2s;}
+    .iconBtn:hover{opacity: 0.6;}
+
+    .modal{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);z-index:1000}
+    .modalCard{width:90%;max-width:400px;background:#0d161d;padding:25px;border-radius:15px;border:1px solid #1e6bf0}
+    .input{width:100%;padding:12px;margin-top:10px;background:#162129;border:1px solid #222;color:#fff;border-radius:8px;font-size:16px}
     
-    .fab{position:fixed;right:16px;bottom:18px;width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--green),#13a76b);display:flex;align-items:center;justify-content:center;color:#042216;font-size:32px;border:none;cursor:pointer;z-index:200}
-    .hidden{display:none!important}
+    .fab{position:fixed;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;background:var(--green);color:#000;font-size:30px;border:none;box-shadow:0 10px 20px rgba(0,0,0,0.5);cursor:pointer}
+    .hidden{display:none}
   </style>
 </head>
 <body>
 
   <div class="appbar">
-    <div class="logo">
-      <svg viewBox="0 0 140 60" xmlns="http://www.w3.org/2000/svg"><g transform="translate(6,6)"><text x="0" y="16" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#fff">HISAB</text><text x="0" y="36" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#fff">PREM</text></g></svg>
-    </div>
-    <div style="margin-left:10px">
-      <div class="title">HISAB PREM</div>
-    </div>
-    
+    <div class="title">HISAB PREM</div>
     <div class="user-profile" id="authSection">
-      <button id="googleLoginBtn" style="background:white; color:black; border:none; padding:8px 12px; border-radius:5px; font-weight:bold; cursor:pointer;">Login</button>
+        <button onclick="loginWithGoogle()" style="background:white; border:none; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer;">Google Login</button>
     </div>
   </div>
 
-  <div class="container">
+  <div class="container" id="mainContent">
     <div class="card">
-      <div class="balanceRow">
-        <div class="balanceLeft">
-          <div style="font-size:13px;color:#cfeee4">Current Balance</div>
-          <div id="balanceAmt" class="balanceAmt">₹0</div>
-        </div>
-      </div>
-
+      <div style="font-size:14px;color:var(--muted)">Current Balance</div>
+      <div id="balanceAmt" style="font-size:36px;font-weight:800">₹0</div>
+      
       <div class="summary">
-        <div class="box">Cash In<br/><div id="sumIn" style="font-size:18px;margin-top:6px">₹0</div></div>
-        <div class="box">Cash Out<br/><div id="sumOut" style="font-size:18px;margin-top:6px">₹0</div></div>
+        <div class="box">Cash In<br/><span id="sumIn" style="color:var(--green); font-size:20px">₹0</span></div>
+        <div class="box">Cash Out<br/><span id="sumOut" style="color:var(--red); font-size:20px">₹0</span></div>
       </div>
 
-      <div style="margin-top:15px; text-align:center;">
-        <canvas id="chartSmall" style="max-width:200px; margin:0 auto;"></canvas>
-      </div>
-
-      <div style="display:flex; gap:10px; margin-top:15px; align-items:center;">
-        <button class="smallBtn in" id="btnQuickIn">Cash In</button>
-        <button class="smallBtn out" id="btnQuickOut">Cash Out</button>
-        <button id="exportBtn" class="exportBtn">📄 Export</button>
-        <div id="syncStatus" style="margin-left:auto; font-size:12px; color:var(--muted)">Offline</div>
+      <div style="margin-top:20px; display:flex; gap:10px">
+        <button onclick="navigate('in')" style="background:var(--green); border:none; padding:10px; border-radius:8px; flex:1; cursor:pointer">In View</button>
+        <button onclick="navigate('out')" style="background:var(--red); border:none; padding:10px; border-radius:8px; flex:1; cursor:pointer">Out View</button>
+        <button onclick="exportToPDF()" style="background:white; color:black; border:none; padding:10px; border-radius:8px; cursor:pointer">📄 PDF</button>
       </div>
     </div>
 
-    <div id="page-in" class="page">
-      <h3 style="margin-top:18px">Recent Cash In</h3>
-      <div id="listIn" class="list"></div>
-    </div>
-    <div id="page-out" class="page hidden">
-      <h3 style="margin-top:18px">Recent Cash Out</h3>
-      <div id="listOut" class="list"></div>
-    </div>
+    <div id="page-in" class="list"><h3>Recent Cash In</h3><div id="listIn"></div></div>
+    <div id="page-out" class="list hidden"><h3>Recent Cash Out</h3><div id="listOut"></div></div>
   </div>
 
-  <button class="fab" id="fabAdd">+</button>
+  <button class="fab" onclick="openModal()">+</button>
 
-  <div class="modal" id="modalAdd">
+  <div class="modal" id="modalEntry">
     <div class="modalCard">
       <h3 id="modalTitle">Add Entry</h3>
+      <input type="hidden" id="editId">
       <select id="typeSel" class="input">
         <option value="in">Cash In</option>
         <option value="out">Cash Out</option>
       </select>
-      <input id="amtInp" class="input" type="number" placeholder="Amount (₹)" />
-      <input id="noteInp" class="input" type="text" placeholder="Note" />
-      <div style="display:flex;gap:10px;margin-top:15px">
-        <button id="saveBtn" class="input" style="background:var(--green); color:#000; font-weight:800">Save</button>
-        <button id="cancelBtn" class="input" style="background:transparent; border:1px solid #333">Cancel</button>
+      <input id="amtInp" class="input" type="number" placeholder="Amount (₹)">
+      <input id="noteInp" class="input" type="text" placeholder="Note (Dukan, Rent, etc.)">
+      <div style="display:flex; gap:10px; margin-top:20px">
+        <button onclick="saveToFirebase()" style="background:var(--accent); border:none; padding:12px; border-radius:8px; color:white; flex:2; cursor:pointer">Save Changes</button>
+        <button onclick="closeModal()" style="background:transparent; border:1px solid #333; padding:12px; border-radius:8px; color:white; flex:1; cursor:pointer">Cancel</button>
       </div>
     </div>
   </div>
 
   <script>
-    /* 1. Firebase Configuration */
+    // 1. Firebase Setup
     const firebaseConfig = {
-      apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
-      authDomain: "hisabprem.firebaseapp.com",
-      projectId: "hisabprem",
-      storageBucket: "hisabprem.firebasestorage.app",
-      messagingSenderId: "299571413492",
-      appId: "1:299571413492:web:de65e2a8d3544060fcb9a1"
+        apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
+        authDomain: "hisabprem.firebaseapp.com",
+        projectId: "hisabprem",
+        storageBucket: "hisabprem.firebasestorage.app",
+        messagingSenderId: "299571413492",
+        appId: "1:299571413492:web:de65e2a8d3544060fcb9a1"
     };
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    /* 2. Login Logic */
-    function loginWithGoogle() {
-      auth.signInWithPopup(provider).catch(err => alert("Login Error: " + err.message));
-    }
+    let currentUser = null;
+    let allEntries = [];
 
-    auth.onAuthStateChanged((user) => {
-      const authSection = document.getElementById('authSection');
-      if (user) {
-        authSection.innerHTML = `
-          <img src="${user.photoURL}" class="user-img">
-          <span style="font-size:12px;">${user.displayName.split(' ')[0]}</span>
-          <button onclick="auth.signOut()" style="background:none; border:none; color:white; cursor:pointer; font-size:10px; text-decoration:underline;">Logout</button>
-        `;
-      } else {
-        authSection.innerHTML = `<button id="googleLoginBtn" onclick="loginWithGoogle()" style="background:white; color:black; border:none; padding:8px 12px; border-radius:5px; font-weight:bold; cursor:pointer;">Login</button>`;
-      }
+    // 2. Auth Logic
+    function loginWithGoogle() { auth.signInWithPopup(provider); }
+    
+    auth.onAuthStateChanged(user => {
+        currentUser = user;
+        const authSection = document.getElementById('authSection');
+        if(user) {
+            authSection.innerHTML = `<img src="${user.photoURL}" class="user-img"> <button onclick="auth.signOut()" style="background:none; border:none; color:white; cursor:pointer; text-decoration:underline; font-size:12px">Logout</button>`;
+            syncFromFirebase(); // Login hote hi data load hoga
+        } else {
+            authSection.innerHTML = `<button onclick="loginWithGoogle()" style="background:white; border:none; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer;">Google Login</button>`;
+            renderLists(); // Offline data dikhayega
+        }
     });
 
-    /* 3. Hisab Logic (Local Storage) */
-    const LOCAL_IN = 'hisabprem_in';
-    const LOCAL_OUT = 'hisabprem_out';
-    let entriesIn = JSON.parse(localStorage.getItem(LOCAL_IN) || '[]');
-    let entriesOut = JSON.parse(localStorage.getItem(LOCAL_OUT) || '[]');
-
-    const qs = sel => document.querySelector(sel);
-    
-    function renderAll() {
-      const totalIn = entriesIn.reduce((s, x) => s + Number(x.amount), 0);
-      const totalOut = entriesOut.reduce((s, x) => s + Number(x.amount), 0);
-      
-      qs('#sumIn').textContent = '₹' + totalIn.toLocaleString();
-      qs('#sumOut').textContent = '₹' + totalOut.toLocaleString();
-      qs('#balanceAmt').textContent = '₹' + (totalIn - totalOut).toLocaleString();
-      
-      renderList('in', entriesIn, qs('#listIn'));
-      renderList('out', entriesOut, qs('#listOut'));
-      updateChart(totalIn, totalOut);
+    // 3. Firestore Sync (Realtime)
+    function syncFromFirebase() {
+        if(!currentUser) return;
+        db.collection("users").doc(currentUser.uid).collection("entries")
+          .orderBy("timestamp", "desc")
+          .onSnapshot(snapshot => {
+              allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+              renderLists();
+          });
     }
 
-    function renderList(type, data, el) {
-      el.innerHTML = data.length ? '' : '<div style="color:var(--muted)">No entries</div>';
-      data.forEach(e => {
-        el.innerHTML += `
-          <div class="tile ${type}">
-            <div>
-              <div style="font-weight:800; font-size:18px">₹${e.amount}</div>
-              <div style="font-size:14px; color:var(--muted)">${e.note || '-'}</div>
-            </div>
-            <button class="iconBtn" onclick="deleteEntry('${e.id}', '${type}')">🗑️</button>
-          </div>`;
-      });
+    // 4. Save/Edit Logic
+    async function saveToFirebase() {
+        const id = document.getElementById('editId').value;
+        const entry = {
+            type: document.getElementById('typeSel').value,
+            amount: Number(document.getElementById('amtInp').value),
+            note: document.getElementById('noteInp').value,
+            timestamp: Date.now()
+        };
+
+        if(!entry.amount) return alert("Amount daalein!");
+
+        if(currentUser) {
+            const ref = db.collection("users").doc(currentUser.uid).collection("entries");
+            if(id) await ref.doc(id).update(entry); // Edit agar ID hai
+            else await ref.add(entry); // New add
+        } else {
+            alert("Online save karne ke liye login karein! Tab tak data sirf temporary rahega.");
+            allEntries.unshift({...entry, id: Date.now().toString()});
+        }
+        closeModal();
+        renderLists();
     }
 
-    function saveEntry() {
-      const amt = Number(qs('#amtInp').value);
-      const type = qs('#typeSel').value;
-      if (!amt) return;
-      
-      const entry = { id: Date.now().toString(), amount: amt, note: qs('#noteInp').value, date: new Date().toLocaleString() };
-      if (type === 'in') entriesIn.unshift(entry); else entriesOut.unshift(entry);
-      
-      localStorage.setItem(LOCAL_IN, JSON.stringify(entriesIn));
-      localStorage.setItem(LOCAL_OUT, JSON.stringify(entriesOut));
-      renderAll();
-      qs('#modalAdd').style.display = 'none';
+    // 5. Delete Logic
+    async function deleteEntry(id) {
+        if(!confirm("Kya aap ise delete karna chahte hain?")) return;
+        if(currentUser) {
+            await db.collection("users").doc(currentUser.uid).collection("entries").doc(id).delete();
+        } else {
+            allEntries = allEntries.filter(e => e.id !== id);
+            renderLists();
+        }
     }
 
-    function deleteEntry(id, type) {
-      if (type === 'in') entriesIn = entriesIn.filter(x => x.id !== id);
-      else entriesOut = entriesOut.filter(x => x.id !== id);
-      localStorage.setItem(type === 'in' ? LOCAL_IN : LOCAL_OUT, JSON.stringify(type === 'in' ? entriesIn : entriesOut));
-      renderAll();
+    // 6. UI Rendering
+    function renderLists() {
+        const listIn = document.getElementById('listIn');
+        const listOut = document.getElementById('listOut');
+        listIn.innerHTML = ""; listOut.innerHTML = "";
+        
+        let tin = 0, tout = 0;
+
+        allEntries.forEach(e => {
+            const html = `
+                <div class="tile ${e.type}">
+                    <div>
+                        <div style="font-weight:800; font-size:18px">₹${e.amount}</div>
+                        <div style="font-size:13px; color:var(--muted)">${e.note}</div>
+                    </div>
+                    <div class="action-group">
+                        <button class="iconBtn" onclick="openModal('${e.id}')">✏️</button>
+                        <button class="iconBtn" onclick="deleteEntry('${e.id}')">🗑️</button>
+                    </div>
+                </div>`;
+            
+            if(e.type === 'in') { listIn.innerHTML += html; tin += e.amount; }
+            else { listOut.innerHTML += html; tout += e.amount; }
+        });
+
+        document.getElementById('sumIn').textContent = '₹' + tin.toLocaleString();
+        document.getElementById('sumOut').textContent = '₹' + tout.toLocaleString();
+        document.getElementById('balanceAmt').textContent = '₹' + (tin - tout).toLocaleString();
     }
 
-    let myChart;
-    function updateChart(tin, tout) {
-      const ctx = qs('#chartSmall').getContext('2d');
-      if (myChart) myChart.destroy();
-      myChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: { datasets: [{ data: [tin, tout], backgroundColor: ['#24c28b', '#ff6b6b'] }] },
-        options: { cutout: '70%', plugins: { legend: { display: false } } }
-      });
+    // 7. Modal Control
+    function openModal(id = null) {
+        document.getElementById('modalEntry').style.display = 'flex';
+        if(id) {
+            const e = allEntries.find(x => x.id === id);
+            document.getElementById('modalTitle').textContent = "Edit Entry";
+            document.getElementById('editId').value = e.id;
+            document.getElementById('typeSel').value = e.type;
+            document.getElementById('amtInp').value = e.amount;
+            document.getElementById('noteInp').value = e.note;
+        } else {
+            document.getElementById('modalTitle').textContent = "Add Entry";
+            document.getElementById('editId').value = "";
+            document.getElementById('amtInp').value = "";
+            document.getElementById('noteInp').value = "";
+        }
     }
 
-    // Event Listeners
-    qs('#fabAdd').onclick = () => { qs('#modalAdd').style.display = 'flex'; };
-    qs('#cancelBtn').onclick = () => { qs('#modalAdd').style.display = 'none'; };
-    qs('#saveBtn').onclick = saveEntry;
-    qs('#btnQuickIn').onclick = () => { qs('#page-in').classList.remove('hidden'); qs('#page-out').classList.add('hidden'); };
-    qs('#btnQuickOut').onclick = () => { qs('#page-out').classList.remove('hidden'); qs('#page-in').classList.add('hidden'); };
+    function closeModal() { document.getElementById('modalEntry').style.display = 'none'; }
 
-    window.onload = renderAll;
+    function navigate(p) {
+        document.getElementById('page-in').classList.toggle('hidden', p !== 'in');
+        document.getElementById('page-out').classList.toggle('hidden', p !== 'out');
+    }
+
+    // 8. PDF Export Fix
+    function exportToPDF() {
+        const element = document.getElementById('mainContent');
+        const opt = {
+            margin: 10,
+            filename: 'Hisab_Prem_Report.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, backgroundColor: '#071117' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
   </script>
 </body>
 </html>
