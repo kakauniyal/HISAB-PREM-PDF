@@ -1,170 +1,209 @@
-<!DOCTYPE html>
-<html lang="en">
+
+
+<!doctype html>
+<html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hybrid Finance Manager Pro</title>
-    <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #3b82f6; --red: #ef4444; --green: #22c55e; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; }
-        header { background: var(--card); padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .container { padding: 15px; max-width: 600px; margin: auto; }
-        .card { background: var(--card); padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #334155; }
-        input, select { padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #334155; width: 100%; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; background: var(--accent); color: white; font-weight: bold; font-size: 16px; }
-        .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .stat-box { background: #111827; padding: 12px; border-radius: 8px; text-align: center; }
-        .income { color: var(--green); } .expense { color: var(--red); }
-        .transaction-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding: 10px 0; }
-        .btn-group { display: flex; gap: 5px; }
-        .btn-small { padding: 5px 10px; font-size: 12px; width: auto; }
-        #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 9999; padding: 20px; text-align: center; }
-        #status { font-size: 12px; color: #94a3b8; }
-        .hidden { display: none !important; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HISAB PREM — Cloud Sync</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#071117; --card:#0b1113; --accent:#1e6bf0; --green:#24c28b; --red:#ff6b6b; --muted:#98a2a6; --text:#eaf2f5; }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+    
+    /* Login Screen */
+    #loginOverlay { position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; align-items:center; justify-content:center; text-align:center; }
+    .loginCard { background:var(--card); padding:40px; border-radius:20px; border:1px solid #333; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
+    
+    /* Layout */
+    .appbar{display:flex;align-items:center;padding:12px 16px;background:linear-gradient(90deg,var(--accent),#1e88e5);box-shadow:0 4px 12px rgba(0,0,0,0.4)}
+    .container{max-width:800px;margin:20px auto;padding:0 16px}
+    .card{background:rgba(255,255,255,0.03);border-radius:12px;padding:20px;border:1px solid #222}
+    
+    .btn{padding:12px 20px;border-radius:8px;border:none;font-weight:700;cursor:pointer;transition:0.3s}
+    .btn-login{background:#fff;color:#000;font-size:16px;margin-top:20px}
+    .btn-in{background:var(--green);color:#042216}
+    .btn-out{background:var(--red);color:#fff}
+    
+    .tile{display:flex;justify-content:space-between;padding:15px;background:#0b1113;margin-top:10px;border-radius:10px;border-left:6px solid var(--accent)}
+    .tile.in{border-left-color:var(--green)}
+    .tile.out{border-left-color:var(--red)}
+    
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;z-index:1500}
+    .modalCard{width:90%;max-width:400px;background:#07181a;padding:20px;border-radius:12px}
+    .input{width:100%;padding:12px;margin-top:10px;background:#111;border:1px solid #333;color:#fff;border-radius:8px}
+    .hidden{display:none!important}
+  </style>
 </head>
 <body>
 
-<div id="loginOverlay">
-    <h1>💰 Hisab Prem</h1>
-    <p>Cloud sync enabled accounting</p>
-    <button id="googleLoginBtn">Login with Google</button>
-</div>
+  <div id="loginOverlay">
+    <div class="loginCard">
+      <h1 style="color:var(--accent);margin:0">HISAB PREM</h1>
+      <p style="color:var(--muted)">Secure Cloud Storage Enabled</p>
+      <button id="googleLoginBtn" class="btn btn-login">Login with Google</button>
+    </div>
+  </div>
 
-<header>
-    Hybrid Finance Manager
-    <div id="status">Syncing...</div>
-</header>
-
-<div class="container">
-    <div class="summary">
-        <div class="stat-box">Balance<br><b id="balance">₹0</b></div>
-        <div class="stat-box">Income<br><b id="totalIncome" class="income">₹0</b></div>
+  <div id="appContent" class="hidden">
+    <div class="appbar">
+      <div style="font-weight:700;font-size:18px">HISAB PREM</div>
+      <div id="userName" style="margin-left:auto;font-size:12px;opacity:0.8">...</div>
+      <button onclick="logout()" style="margin-left:10px;background:none;border:1px solid #fff;color:#fff;padding:4px 8px;border-radius:4px;cursor:pointer">Logout</button>
     </div>
 
-    <div class="card">
-        <h3>Add Transaction</h3>
-        <input id="desc" placeholder="Kahan kharch kiya?">
-        <input id="amount" type="number" inputmode="decimal" placeholder="Amount (₹)">
-        <select id="type">
-            <option value="expense">Expense (-)</option>
-            <option value="income">Income (+)</option>
-        </select>
-        <button onclick="addTransaction()">Save Entry</button>
+    <div class="container">
+      <div class="card">
+        <div style="color:var(--muted);font-size:14px">Total Balance</div>
+        <h2 id="balanceAmt" style="font-size:32px;margin:8px 0">₹0</h2>
+        <div style="display:flex;gap:20px;font-weight:700">
+          <div style="color:var(--green)">In: <span id="sumIn">₹0</span></div>
+          <div style="color:var(--red)">Out: <span id="sumOut">₹0</span></div>
+        </div>
+        <div style="text-align:center;margin:15px 0">
+          <canvas id="chartSmall" style="max-width:180px;margin:auto"></canvas>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-in" onclick="openAdd('in')">+ Cash In</button>
+          <button class="btn btn-out" onclick="openAdd('out')">- Cash Out</button>
+          <button onclick="exportPDF()" style="margin-left:auto;background:#222;color:#fff;border-radius:8px;padding:8px">📄 PDF</button>
+        </div>
+      </div>
+      <div id="mainList" style="margin-top:20px;padding-bottom:100px"></div>
     </div>
+  </div>
 
-    <div class="card">
-        <input id="search" placeholder="Search transactions..." oninput="render()">
-        <div id="transactionList"></div>
+  <div id="modalAdd" class="modal">
+    <div class="modalCard">
+      <h3 id="modalTitle">Entry Karein</h3>
+      <select id="typeSel" class="input">
+        <option value="in">Cash In</option>
+        <option value="out">Cash Out</option>
+      </select>
+      <input id="amtInp" class="input" type="number" placeholder="Amount (₹)">
+      <input id="noteInp" class="input" type="text" placeholder="Note (Dukaan, Udhaar, etc.)">
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button onclick="saveEntry()" class="btn btn-in" style="flex:1">Save Online</button>
+        <button onclick="closeModal()" class="btn" style="background:#333;color:#fff">Cancel</button>
+      </div>
     </div>
-    
-    <button onclick="logout()" style="background:#334155; margin-top:20px;">Logout</button>
-</div>
+  </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, collection, onSnapshot, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+  <script>
+    // --- YOUR FIREBASE CONFIG ---
     const firebaseConfig = {
-        apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
-        authDomain: "hisabprem.firebaseapp.com",
-        projectId: "hisabprem",
-        storageBucket: "hisabprem.firebasestorage.app",
-        messagingSenderId: "299571413492",
-        appId: "1:299571413492:web:de65e2a8d3544060fcb9a1"
+      apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
+      authDomain: "hisabprem.firebaseapp.com",
+      projectId: "hisabprem",
+      storageBucket: "hisabprem.firebasestorage.app",
+      messagingSenderId: "299571413492",
+      appId: "1:299571413492:web:de65e2a8d3544060fcb9a1",
+      measurementId: "G-6DJE8XPXQ5"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
-
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
     let currentUser = null;
-    let transactions = [];
+    let myChart = null;
 
-    // --- Auth Logic ---
-    document.getElementById("googleLoginBtn").onclick = () => signInWithRedirect(auth, provider);
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            document.getElementById("loginOverlay").classList.add("hidden");
-            startSync();
-        } else {
-            document.getElementById("loginOverlay").classList.remove("hidden");
-        }
+    // --- LOGIN LOGIC ---
+    document.getElementById('googleLoginBtn').addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(e => alert("Error: " + e.message));
     });
 
-    window.logout = () => { if(confirm("Logout?")) signOut(auth).then(()=>location.reload()); };
+    function logout() { auth.signOut().then(() => location.reload()); }
 
-    // --- Sync Logic ---
-    function startSync() {
-        const q = query(collection(db, "users", currentUser.uid, "transactions"), orderBy("updatedAt", "desc"));
-        onSnapshot(q, (snapshot) => {
-            transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            render();
-            document.getElementById("status").innerText = "Cloud Synced";
-        }, (err) => {
-            console.error(err);
-            document.getElementById("status").innerText = "Permission Denied (Check Rules)";
-        });
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('appContent').classList.remove('hidden');
+        document.getElementById('userName').textContent = user.displayName;
+        listenToData();
+      } else {
+        document.getElementById('loginOverlay').classList.remove('hidden');
+        document.getElementById('appContent').classList.add('hidden');
+      }
+    });
+
+    // --- DATABASE LOGIC ---
+    function listenToData() {
+      db.collection('user_hisab')
+        .where('userId', '==', currentUser.uid)
+        .orderBy('timestamp', 'desc')
+        .onSnapshot(snap => {
+          const entries = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          renderUI(entries);
+        }, err => console.log(err));
     }
 
-    // --- UI Logic ---
-    window.render = function() {
-        const list = document.getElementById("transactionList");
-        const search = document.getElementById("search").value.toLowerCase();
-        list.innerHTML = "";
-        
-        let inc = 0, exp = 0;
-        transactions.filter(t => t.desc.toLowerCase().includes(search)).forEach(t => {
-            const isInc = t.type === "income";
-            if(isInc) inc += Number(t.amount); else exp += Number(t.amount);
+    async function saveEntry() {
+      const amt = Number(document.getElementById('amtInp').value);
+      const note = document.getElementById('noteInp').value;
+      const type = document.getElementById('typeSel').value;
+      if (!amt) return;
 
-            const div = document.createElement("div");
-            div.className = "transaction-item";
-            div.innerHTML = `
-                <div>
-                    <b>${t.desc}</b><br>
-                    <small class="${isInc?'income':'expense'}">${isInc?'+':'-'}₹${t.amount}</small>
-                </div>
-                <div class="btn-group">
-                    <button class="btn-small" style="background:var(--red)" onclick="deleteEntry('${t.id}')">✕</button>
-                </div>
-            `;
-            list.appendChild(div);
-        });
-
-        document.getElementById("totalIncome").innerText = `₹${inc}`;
-        document.getElementById("balance").innerText = `₹${inc - exp}`;
+      await db.collection('user_hisab').add({
+        userId: currentUser.uid,
+        amount: amt,
+        note: note,
+        type: type,
+        date: new Date().toLocaleString(),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      closeModal();
     }
 
-    // --- Action Logic ---
-    window.addTransaction = async function() {
-        const desc = document.getElementById("desc").value;
-        const amount = document.getElementById("amount").value;
-        const type = document.getElementById("type").value;
+    function renderUI(entries) {
+      const listEl = document.getElementById('mainList');
+      listEl.innerHTML = '';
+      let tin = 0, tout = 0;
 
-        if (!desc || !amount) return alert("Details bharo bhai!");
+      entries.forEach(e => {
+        if (e.type === 'in') tin += e.amount; else tout += e.amount;
+        listEl.innerHTML += `
+          <div class="tile ${e.type}">
+            <div>
+              <div style="font-weight:700;font-size:18px">₹${e.amount}</div>
+              <div style="font-size:13px">${e.note || ''}</div>
+              <small style="color:var(--muted);font-size:10px">${e.date}</small>
+            </div>
+            <button onclick="deleteEntry('${e.id}')" style="background:none;border:none;cursor:pointer">🗑️</button>
+          </div>`;
+      });
 
-        const id = Date.now().toString();
-        const data = { id, desc, amount, type, updatedAt: Date.now() };
-
-        try {
-            await setDoc(doc(db, "users", currentUser.uid, "transactions", id), data);
-            document.getElementById("desc").value = "";
-            document.getElementById("amount").value = "";
-        } catch (e) {
-            alert("Error: " + e.message);
-        }
+      document.getElementById('sumIn').textContent = '₹' + tin;
+      document.getElementById('sumOut').textContent = '₹' + tout;
+      document.getElementById('balanceAmt').textContent = '₹' + (tin - tout);
+      updateChart(tin, tout);
     }
 
-    window.deleteEntry = async function(id) {
-        if(confirm("Delete karein?")) {
-            await deleteDoc(doc(db, "users", currentUser.uid, "transactions", id));
-        }
+    // --- UTILS ---
+    function updateChart(tin, tout) {
+      const ctx = document.getElementById('chartSmall').getContext('2d');
+      if (myChart) myChart.destroy();
+      myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { datasets: [{ data: [tin, tout], backgroundColor: ['#24c28b', '#ff6b6b'], borderWidth: 0 }] },
+        options: { cutout: '80%', plugins: { legend: { display: false } } }
+      });
     }
-</script>
+
+    function openAdd(type) { document.getElementById('typeSel').value = type; document.getElementById('modalAdd').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modalAdd').style.display = 'none'; }
+    async function deleteEntry(id) { if(confirm("Delete karein?")) await db.collection('user_hisab').doc(id).delete(); }
+    function exportPDF() { html2pdf().from(document.getElementById('mainList')).save('Hisab_Prem.pdf'); }
+  </script>
 </body>
 </html>
