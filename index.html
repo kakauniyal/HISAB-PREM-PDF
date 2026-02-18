@@ -1,451 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Advanced Hybrid Finance Manager</title>
-
-<style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#0f172a;
-  color:white;
-}
-
-header{
-  background:#1e293b;
-  padding:15px;
-  text-align:center;
-  font-size:22px;
-  font-weight:bold;
-}
-
-.container{
-  padding:20px;
-  max-width:1000px;
-  margin:auto;
-}
-
-.card{
-  background:#1e293b;
-  padding:15px;
-  margin:10px 0;
-  border-radius:10px;
-}
-
-input, select{
-  padding:8px;
-  margin:5px 0;
-  border-radius:6px;
-  border:none;
-  width:100%;
-}
-
-button{
-  padding:8px 12px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  background:#3b82f6;
-  color:white;
-}
-
-button.delete{
-  background:#ef4444;
-}
-
-button.edit{
-  background:#f59e0b;
-}
-
-.flex{
-  display:flex;
-  gap:10px;
-}
-
-.summary{
-  display:flex;
-  justify-content:space-between;
-  background:#111827;
-  padding:10px;
-  border-radius:8px;
-  margin-top:10px;
-}
-
-#status{
-  font-size:12px;
-  margin-top:5px;
-}
-
-#loginOverlay{
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:#0f172a;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  z-index:9999;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hybrid Finance Manager Pro</title>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #3b82f6; --red: #ef4444; --green: #22c55e; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; }
+        header { background: var(--card); padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: var(--card); padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #334155; }
+        input, select { padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #334155; width: 100%; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; background: var(--accent); color: white; font-weight: bold; font-size: 16px; }
+        .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: #111827; padding: 12px; border-radius: 8px; text-align: center; }
+        .income { color: var(--green); } .expense { color: var(--red); }
+        .transaction-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding: 10px 0; }
+        .btn-group { display: flex; gap: 5px; }
+        .btn-small { padding: 5px 10px; font-size: 12px; width: auto; }
+        #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 9999; padding: 20px; text-align: center; }
+        #status { font-size: 12px; color: #94a3b8; }
+        .hidden { display: none !important; }
+    </style>
 </head>
-
 <body>
 
+<div id="loginOverlay">
+    <h1>💰 Hisab Prem</h1>
+    <p>Cloud sync enabled accounting</p>
+    <button id="googleLoginBtn">Login with Google</button>
+</div>
+
 <header>
-Hybrid Finance Manager
-<div id="status">Checking connection...</div>
+    Hybrid Finance Manager
+    <div id="status">Syncing...</div>
 </header>
 
 <div class="container">
+    <div class="summary">
+        <div class="stat-box">Balance<br><b id="balance">₹0</b></div>
+        <div class="stat-box">Income<br><b id="totalIncome" class="income">₹0</b></div>
+    </div>
 
-<div class="card">
-<h3>Add Transaction</h3>
-<input id="desc" placeholder="Description">
-<input id="amount" type="number" placeholder="Amount">
-<select id="type">
-  <option value="income">Income</option>
-  <option value="expense">Expense</option>
-</select>
-<select id="category">
-  <option value="general">General</option>
-  <option value="food">Food</option>
-  <option value="travel">Travel</option>
-  <option value="shopping">Shopping</option>
-</select>
-<button onclick="addTransaction()">Add Transaction</button>
-</div>
+    <div class="card">
+        <h3>Add Transaction</h3>
+        <input id="desc" placeholder="Kahan kharch kiya?">
+        <input id="amount" type="number" inputmode="decimal" placeholder="Amount (₹)">
+        <select id="type">
+            <option value="expense">Expense (-)</option>
+            <option value="income">Income (+)</option>
+        </select>
+        <button onclick="addTransaction()">Save Entry</button>
+    </div>
 
-<div class="summary">
-<div>Total Income: ₹<span id="totalIncome">0</span></div>
-<div>Total Expense: ₹<span id="totalExpense">0</span></div>
-<div>Balance: ₹<span id="balance">0</span></div>
-</div>
-
-<div class="card">
-<h3>Search</h3>
-<input id="search" placeholder="Search..." oninput="render()">
-</div>
-
-<div class="card">
-<h3>Transactions</h3>
-<div id="transactionList"></div>
-</div>
-
-</div>
-
-<!-- LOGIN OVERLAY -->
-<div id="loginOverlay">
-<h2>Login Required</h2>
-<button id="googleLoginBtn">Login with Google</button>
+    <div class="card">
+        <input id="search" placeholder="Search transactions..." oninput="render()">
+        <div id="transactionList"></div>
+    </div>
+    
+    <button onclick="logout()" style="background:#334155; margin-top:20px;">Logout</button>
 </div>
 
 <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, collection, onSnapshot, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ================== FIREBASE IMPORTS ==================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    const firebaseConfig = {
+        apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
+        authDomain: "hisabprem.firebaseapp.com",
+        projectId: "hisabprem",
+        storageBucket: "hisabprem.firebasestorage.app",
+        messagingSenderId: "299571413492",
+        appId: "1:299571413492:web:de65e2a8d3544060fcb9a1"
+    };
 
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
 
-// ================== FIREBASE CONFIG ==================
-// 🔥 यहाँ अपना Firebase Config paste करना
-const firebaseConfig = {
-  apiKey: "PASTE_HERE",
-  authDomain: "PASTE_HERE",
-  projectId: "PASTE_HERE",
-  storageBucket: "PASTE_HERE",
-  messagingSenderId: "PASTE_HERE",
-  appId: "PASTE_HERE"
-};
+    let currentUser = null;
+    let transactions = [];
 
-// ================== INIT ==================
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+    // --- Auth Logic ---
+    document.getElementById("googleLoginBtn").onclick = () => signInWithRedirect(auth, provider);
 
-let currentUser = null;
-let unsubscribe = null;
-
-const loginOverlay = document.getElementById("loginOverlay");
-const loginBtn = document.getElementById("googleLoginBtn");
-const statusDiv = document.getElementById("status");
-
-// ================== LOGIN ==================
-loginBtn.onclick = async () => {
-  await signInWithPopup(auth, provider);
-};
-
-onAuthStateChanged(auth, user=>{
-  if(user){
-    currentUser = user;
-    loginOverlay.style.display="none";
-    startRealtimeSync();
-  }else{
-    loginOverlay.style.display="flex";
-  }
-});
-
-// ============== CONNECTION STATUS ==============
-window.addEventListener("online",()=>{
-  statusDiv.innerText="Online";
-});
-window.addEventListener("offline",()=>{
-  statusDiv.innerText="Offline";
-});
-
-// ================== LOCAL STORAGE ==================
-function getLocalData(){
-  return JSON.parse(localStorage.getItem("transactions") || "[]");
-}
-
-function setLocalData(data){
-  localStorage.setItem("transactions", JSON.stringify(data));
-}
-
-// ================== RENDER FUNCTION ==================
-function render(){
-
-  const list = document.getElementById("transactionList");
-  const searchText = document.getElementById("search").value.toLowerCase();
-
-  list.innerHTML="";
-
-  const data = getLocalData();
-
-  let totalIncome = 0;
-  let totalExpense = 0;
-
-  data
-  .filter(item => item.desc.toLowerCase().includes(searchText))
-  .sort((a,b)=> b.updatedAt - a.updatedAt)
-  .forEach(item=>{
-
-    if(item.type==="income"){
-      totalIncome += Number(item.amount);
-    }else{
-      totalExpense += Number(item.amount);
-    }
-
-    const div = document.createElement("div");
-    div.className="card";
-
-    div.innerHTML=`
-      <b>${item.desc}</b> 
-      <br>₹${item.amount} 
-      <br>${item.type.toUpperCase()} - ${item.category}
-      <br>
-      <button class="edit" onclick="editTransaction('${item.id}')">Edit</button>
-      <button class="delete" onclick="deleteTransaction('${item.id}')">Delete</button>
-    `;
-
-    list.appendChild(div);
-  });
-
-  document.getElementById("totalIncome").innerText = totalIncome;
-  document.getElementById("totalExpense").innerText = totalExpense;
-  document.getElementById("balance").innerText = totalIncome - totalExpense;
-}
-
-window.render = render;
-
-// ================== ADD ==================
-window.addTransaction = function(){
-
-  const desc = document.getElementById("desc").value;
-  const amount = document.getElementById("amount").value;
-  const type = document.getElementById("type").value;
-  const category = document.getElementById("category").value;
-
-  if(!desc || !amount){
-    alert("Fill all fields");
-    return;
-  }
-
-  const data = getLocalData();
-
-  data.push({
-    id: Date.now().toString(),
-    desc,
-    amount,
-    type,
-    category,
-    updatedAt: Date.now()
-  });
-
-  setLocalData(data);
-  render();
-  pushToCloud();
-
-  document.getElementById("desc").value="";
-  document.getElementById("amount").value="";
-};
-
-// ================== DELETE ==================
-window.deleteTransaction = function(id){
-
-  let data = getLocalData();
-  data = data.filter(item=> item.id !== id);
-
-  setLocalData(data);
-  render();
-  pushToCloud();
-};
-
-// ================== EDIT ==================
-window.editTransaction = function(id){
-
-  const data = getLocalData();
-  const item = data.find(x=> x.id===id);
-
-  const newDesc = prompt("Edit Description", item.desc);
-  const newAmount = prompt("Edit Amount", item.amount);
-
-  if(newDesc===null || newAmount===null) return;
-
-  item.desc = newDesc;
-  item.amount = newAmount;
-  item.updatedAt = Date.now();
-
-  setLocalData(data);
-  render();
-  pushToCloud();
-};
-
-// ================== MERGE ENGINE ==================
-function mergeData(localData, cloudData){
-
-  const map = new Map();
-
-  [...localData, ...cloudData].forEach(item=>{
-    if(!map.has(item.id) || map.get(item.id).updatedAt < item.updatedAt){
-      map.set(item.id, item);
-    }
-  });
-
-  return Array.from(map.values());
-}
-
-render();
-
-// ================== HYBRID CLOUD SYNC ==================
-
-let unsubscribeListener = null;
-
-function startRealtimeSync(){
-
-  if(!currentUser) return;
-
-  const ref = collection(db,"users",currentUser.uid,"transactions");
-
-  if(unsubscribeListener){
-    unsubscribeListener();
-  }
-
-  unsubscribeListener = onSnapshot(ref,(snapshot)=>{
-
-    const cloudData = [];
-
-    snapshot.forEach(doc=>{
-      cloudData.push(doc.data());
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById("loginOverlay").classList.add("hidden");
+            startSync();
+        } else {
+            document.getElementById("loginOverlay").classList.remove("hidden");
+        }
     });
 
-    const localData = getLocalData();
-    const merged = mergeData(localData,cloudData);
+    window.logout = () => { if(confirm("Logout?")) signOut(auth).then(()=>location.reload()); };
 
-    setLocalData(merged);
-    render();
+    // --- Sync Logic ---
+    function startSync() {
+        const q = query(collection(db, "users", currentUser.uid, "transactions"), orderBy("updatedAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            render();
+            document.getElementById("status").innerText = "Cloud Synced";
+        }, (err) => {
+            console.error(err);
+            document.getElementById("status").innerText = "Permission Denied (Check Rules)";
+        });
+    }
 
-  });
-}
+    // --- UI Logic ---
+    window.render = function() {
+        const list = document.getElementById("transactionList");
+        const search = document.getElementById("search").value.toLowerCase();
+        list.innerHTML = "";
+        
+        let inc = 0, exp = 0;
+        transactions.filter(t => t.desc.toLowerCase().includes(search)).forEach(t => {
+            const isInc = t.type === "income";
+            if(isInc) inc += Number(t.amount); else exp += Number(t.amount);
 
-// ================== PUSH TO CLOUD ==================
+            const div = document.createElement("div");
+            div.className = "transaction-item";
+            div.innerHTML = `
+                <div>
+                    <b>${t.desc}</b><br>
+                    <small class="${isInc?'income':'expense'}">${isInc?'+':'-'}₹${t.amount}</small>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-small" style="background:var(--red)" onclick="deleteEntry('${t.id}')">✕</button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
 
-async function pushToCloud(){
+        document.getElementById("totalIncome").innerText = `₹${inc}`;
+        document.getElementById("balance").innerText = `₹${inc - exp}`;
+    }
 
-  if(!currentUser) return;
+    // --- Action Logic ---
+    window.addTransaction = async function() {
+        const desc = document.getElementById("desc").value;
+        const amount = document.getElementById("amount").value;
+        const type = document.getElementById("type").value;
 
-  const data = getLocalData();
-  const ref = collection(db,"users",currentUser.uid,"transactions");
+        if (!desc || !amount) return alert("Details bharo bhai!");
 
-  for(const item of data){
-    await setDoc(
-      doc(db,"users",currentUser.uid,"transactions",item.id),
-      item
-    );
-  }
-}
+        const id = Date.now().toString();
+        const data = { id, desc, amount, type, updatedAt: Date.now() };
 
-// ================== AUTO SYNC ON LOGIN ==================
+        try {
+            await setDoc(doc(db, "users", currentUser.uid, "transactions", id), data);
+            document.getElementById("desc").value = "";
+            document.getElementById("amount").value = "";
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
 
-onAuthStateChanged(auth,(user)=>{
-
-  if(user){
-    currentUser = user;
-    startRealtimeSync();
-  }else{
-    currentUser = null;
-    setLocalData([]);
-    render();
-  }
-
-});
-
-// ================== EXPORT BACKUP ==================
-
-window.exportData = function(){
-
-  const data = getLocalData();
-  const blob = new Blob([JSON.stringify(data,null,2)],{
-    type:"application/json"
-  });
-
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "backup.json";
-  a.click();
-};
-
-// ================== IMPORT BACKUP ==================
-
-window.importData = function(event){
-
-  const file = event.target.files[0];
-  if(!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = function(e){
-
-    const importedData = JSON.parse(e.target.result);
-    const localData = getLocalData();
-    const merged = mergeData(localData,importedData);
-
-    setLocalData(merged);
-    render();
-    pushToCloud();
-  };
-
-  reader.readAsText(file);
-};
-
-console.log("🔥 HYBRID ENGINE READY 🔥");
+    window.deleteEntry = async function(id) {
+        if(confirm("Delete karein?")) {
+            await deleteDoc(doc(db, "users", currentUser.uid, "transactions", id));
+        }
+    }
+</script>
+</body>
+</html>
