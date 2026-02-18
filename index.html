@@ -1,294 +1,451 @@
-<!doctype html>
-<html lang="hi">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>HISAB PREM — Cloud Sync</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Hybrid Finance Manager</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
-  
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0f172a;
+  color:white;
+}
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg:#071117; --card:#0b1113; --accent:#1e6bf0; --green:#24c28b; --red:#ff6b6b; --muted:#98a2a6; --text:#eaf2f5;
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-    
-    /* Login Overlay */
-    #loginOverlay {
-      position: fixed; inset: 0; background: var(--bg); z-index: 1000;
-      display: flex; align-items: center; justify-content: center; text-align: center;
-    }
-    .loginCard { background: var(--card); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 400px; }
-    
-    /* App Layout */
-    .appbar { display: flex; align-items: center; padding: 12px 16px; background: linear-gradient(90deg, var(--accent), #1e88e5); position: sticky; top: 0; z-index: 100; }
-    .title { font-weight: 700; font-size: 18px; }
-    .container { max-width: 600px; margin: 14px auto; padding: 0 16px; }
-    .card { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 18px; border: 1px solid rgba(255,255,255,0.05); }
-    .balanceAmt { font-weight: 800; font-size: 32px; margin: 8px 0; }
-    .summary { display: flex; gap: 10px; margin-top: 15px; }
-    .summary .box { flex: 1; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.2); text-align: center; }
+header{
+  background:#1e293b;
+  padding:15px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
 
-    /* Buttons */
-    .smallBtn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 14px; }
-    .smallBtn.in { background: var(--green); color: #042216; }
-    .smallBtn.out { background: var(--red); color: #2b0f0f; }
-    .smallBtn.google { background: #fff; color: #000; margin-top: 20px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; }
-    .smallBtn:active { transform: scale(0.98); }
+.container{
+  padding:20px;
+  max-width:1000px;
+  margin:auto;
+}
 
-    /* Transactions */
-    .list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 50px; }
-    .tile { display: flex; justify-content: space-between; align-items: center; padding: 14px; border-radius: 10px; background: var(--card); border-left: 5px solid transparent; }
-    .tile.in { border-left-color: var(--green); }
-    .tile.out { border-left-color: var(--red); }
-    .iconBtn { background: transparent; border: none; font-size: 18px; cursor: pointer; opacity: 0.6; }
+.card{
+  background:#1e293b;
+  padding:15px;
+  margin:10px 0;
+  border-radius:10px;
+}
 
-    /* Modal */
-    .modal { display: none; position: fixed; inset: 0; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); z-index: 200; padding: 20px; }
-    .modalCard { width: 100%; max-width: 400px; background: #111; border-radius: 15px; padding: 25px; border: 1px solid #333; }
-    .input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; margin-top: 12px; font-size: 16px; }
-    
-    .hidden { display: none !important; }
-  </style>
+input, select{
+  padding:8px;
+  margin:5px 0;
+  border-radius:6px;
+  border:none;
+  width:100%;
+}
+
+button{
+  padding:8px 12px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  background:#3b82f6;
+  color:white;
+}
+
+button.delete{
+  background:#ef4444;
+}
+
+button.edit{
+  background:#f59e0b;
+}
+
+.flex{
+  display:flex;
+  gap:10px;
+}
+
+.summary{
+  display:flex;
+  justify-content:space-between;
+  background:#111827;
+  padding:10px;
+  border-radius:8px;
+  margin-top:10px;
+}
+
+#status{
+  font-size:12px;
+  margin-top:5px;
+}
+
+#loginOverlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:#0f172a;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  z-index:9999;
+}
+</style>
 </head>
+
 <body>
 
-  <div id="loginOverlay">
-    <div class="loginCard">
-      <h1 style="margin:0; color:var(--accent)">HISAB PREM</h1>
-      <p style="color:var(--muted)">Apna data cloud par surakshit rakhein</p>
-      <button class="smallBtn google" onclick="login()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18" alt="G">
-        Login with Google
-      </button>
-    </div>
-  </div>
+<header>
+Hybrid Finance Manager
+<div id="status">Checking connection...</div>
+</header>
 
-  <div id="appContent" class="hidden">
-    <div class="appbar">
-      <div class="title">HISAB PREM</div>
-      <div style="margin-left:auto; display:flex; align-items:center; gap:10px">
-        <span id="userName" style="font-size:12px; opacity:0.8"></span>
-        <button onclick="logout()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:#fff; border-radius:5px; padding:4px 8px; cursor:pointer">Logout</button>
-      </div>
-    </div>
+<div class="container">
 
-    <div class="container">
-      <div class="card">
-        <div style="color:var(--muted); font-size:14px">Total Balance</div>
-        <div id="balanceAmt" class="balanceAmt">₹0</div>
-        
-        <div class="summary">
-          <div class="box">
-            <div style="color:var(--muted); font-size:12px">CASH IN</div>
-            <div id="sumIn" style="color:var(--green); font-weight:700">₹0</div>
-          </div>
-          <div class="box">
-            <div style="color:var(--muted); font-size:12px">CASH OUT</div>
-            <div id="sumOut" style="color:var(--red); font-weight:700">₹0</div>
-          </div>
-        </div>
+<div class="card">
+<h3>Add Transaction</h3>
+<input id="desc" placeholder="Description">
+<input id="amount" type="number" placeholder="Amount">
+<select id="type">
+  <option value="income">Income</option>
+  <option value="expense">Expense</option>
+</select>
+<select id="category">
+  <option value="general">General</option>
+  <option value="food">Food</option>
+  <option value="travel">Travel</option>
+  <option value="shopping">Shopping</option>
+</select>
+<button onclick="addTransaction()">Add Transaction</button>
+</div>
 
-        <div style="height: 150px; margin: 20px 0; display: flex; justify-content: center;">
-          <canvas id="chartSmall"></canvas>
-        </div>
+<div class="summary">
+<div>Total Income: ₹<span id="totalIncome">0</span></div>
+<div>Total Expense: ₹<span id="totalExpense">0</span></div>
+<div>Balance: ₹<span id="balance">0</span></div>
+</div>
 
-        <div style="display:flex; gap:10px;">
-          <button class="smallBtn in" onclick="openAdd('in')" style="flex:1">+ In</button>
-          <button class="smallBtn out" onclick="openAdd('out')" style="flex:1">- Out</button>
-          <button onclick="exportPDF()" style="background:#333; color:#fff; border-radius:10px; padding:0 15px; border:none; cursor:pointer">PDF</button>
-        </div>
-      </div>
+<div class="card">
+<h3>Search</h3>
+<input id="search" placeholder="Search..." oninput="render()">
+</div>
 
-      <div class="list" id="mainList">
-        </div>
-    </div>
+<div class="card">
+<h3>Transactions</h3>
+<div id="transactionList"></div>
+</div>
 
-    <div class="modal" id="modalAdd">
-      <div class="modalCard">
-        <h3 id="modalTitle" style="margin-top:0">Add Transaction</h3>
-        <select id="typeSel" class="input">
-          <option value="in">Cash In (+)</option>
-          <option value="out">Cash Out (-)</option>
-        </select>
-        <input id="amtInp" class="input" type="number" placeholder="Amount (₹)" inputmode="numeric" />
-        <input id="noteInp" class="input" type="text" placeholder="Note (e.g. Salary, Rent)" />
-        <div style="display:flex; gap:10px; margin-top:20px">
-          <button onclick="saveEntry()" class="smallBtn in" style="flex:2">Save Transaction</button>
-          <button onclick="closeModal()" class="smallBtn" style="flex:1; background:#333; color:#fff">Cancel</button>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
 
-  <script>
-    // --- FIREBASE CONFIG ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
-      authDomain: "hisabprem.firebaseapp.com",
-      projectId: "hisabprem",
-      storageBucket: "hisabprem.firebasestorage.app",
-      messagingSenderId: "299571413492",
-      appId: "1:299571413492:web:de65e2a8d3544060fcb9a1",
-      measurementId: "G-6DJE8XPXQ5" 
-    };
+<!-- LOGIN OVERLAY -->
+<div id="loginOverlay">
+<h2>Login Required</h2>
+<button id="googleLoginBtn">Login with Google</button>
+</div>
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+<script type="module">
 
-    let currentUser = null;
-    let myChart = null;
+// ================== FIREBASE IMPORTS ==================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    // --- AUTH ---
-    function login() {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(err => alert("Login Error: " + err.message));
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ================== FIREBASE CONFIG ==================
+// 🔥 यहाँ अपना Firebase Config paste करना
+const firebaseConfig = {
+  apiKey: "PASTE_HERE",
+  authDomain: "PASTE_HERE",
+  projectId: "PASTE_HERE",
+  storageBucket: "PASTE_HERE",
+  messagingSenderId: "PASTE_HERE",
+  appId: "PASTE_HERE"
+};
+
+// ================== INIT ==================
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let unsubscribe = null;
+
+const loginOverlay = document.getElementById("loginOverlay");
+const loginBtn = document.getElementById("googleLoginBtn");
+const statusDiv = document.getElementById("status");
+
+// ================== LOGIN ==================
+loginBtn.onclick = async () => {
+  await signInWithPopup(auth, provider);
+};
+
+onAuthStateChanged(auth, user=>{
+  if(user){
+    currentUser = user;
+    loginOverlay.style.display="none";
+    startRealtimeSync();
+  }else{
+    loginOverlay.style.display="flex";
+  }
+});
+
+// ============== CONNECTION STATUS ==============
+window.addEventListener("online",()=>{
+  statusDiv.innerText="Online";
+});
+window.addEventListener("offline",()=>{
+  statusDiv.innerText="Offline";
+});
+
+// ================== LOCAL STORAGE ==================
+function getLocalData(){
+  return JSON.parse(localStorage.getItem("transactions") || "[]");
+}
+
+function setLocalData(data){
+  localStorage.setItem("transactions", JSON.stringify(data));
+}
+
+// ================== RENDER FUNCTION ==================
+function render(){
+
+  const list = document.getElementById("transactionList");
+  const searchText = document.getElementById("search").value.toLowerCase();
+
+  list.innerHTML="";
+
+  const data = getLocalData();
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  data
+  .filter(item => item.desc.toLowerCase().includes(searchText))
+  .sort((a,b)=> b.updatedAt - a.updatedAt)
+  .forEach(item=>{
+
+    if(item.type==="income"){
+      totalIncome += Number(item.amount);
+    }else{
+      totalExpense += Number(item.amount);
     }
 
-    function logout() {
-      auth.signOut().then(() => window.location.reload());
-    }
+    const div = document.createElement("div");
+    div.className="card";
 
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        currentUser = user;
-        document.getElementById('loginOverlay').classList.add('hidden');
-        document.getElementById('appContent').classList.remove('hidden');
-        document.getElementById('userName').textContent = user.displayName.split(' ')[0];
-        listenToData();
-      } else {
-        document.getElementById('loginOverlay').classList.remove('hidden');
-        document.getElementById('appContent').classList.add('hidden');
-      }
+    div.innerHTML=`
+      <b>${item.desc}</b> 
+      <br>₹${item.amount} 
+      <br>${item.type.toUpperCase()} - ${item.category}
+      <br>
+      <button class="edit" onclick="editTransaction('${item.id}')">Edit</button>
+      <button class="delete" onclick="deleteTransaction('${item.id}')">Delete</button>
+    `;
+
+    list.appendChild(div);
+  });
+
+  document.getElementById("totalIncome").innerText = totalIncome;
+  document.getElementById("totalExpense").innerText = totalExpense;
+  document.getElementById("balance").innerText = totalIncome - totalExpense;
+}
+
+window.render = render;
+
+// ================== ADD ==================
+window.addTransaction = function(){
+
+  const desc = document.getElementById("desc").value;
+  const amount = document.getElementById("amount").value;
+  const type = document.getElementById("type").value;
+  const category = document.getElementById("category").value;
+
+  if(!desc || !amount){
+    alert("Fill all fields");
+    return;
+  }
+
+  const data = getLocalData();
+
+  data.push({
+    id: Date.now().toString(),
+    desc,
+    amount,
+    type,
+    category,
+    updatedAt: Date.now()
+  });
+
+  setLocalData(data);
+  render();
+  pushToCloud();
+
+  document.getElementById("desc").value="";
+  document.getElementById("amount").value="";
+};
+
+// ================== DELETE ==================
+window.deleteTransaction = function(id){
+
+  let data = getLocalData();
+  data = data.filter(item=> item.id !== id);
+
+  setLocalData(data);
+  render();
+  pushToCloud();
+};
+
+// ================== EDIT ==================
+window.editTransaction = function(id){
+
+  const data = getLocalData();
+  const item = data.find(x=> x.id===id);
+
+  const newDesc = prompt("Edit Description", item.desc);
+  const newAmount = prompt("Edit Amount", item.amount);
+
+  if(newDesc===null || newAmount===null) return;
+
+  item.desc = newDesc;
+  item.amount = newAmount;
+  item.updatedAt = Date.now();
+
+  setLocalData(data);
+  render();
+  pushToCloud();
+};
+
+// ================== MERGE ENGINE ==================
+function mergeData(localData, cloudData){
+
+  const map = new Map();
+
+  [...localData, ...cloudData].forEach(item=>{
+    if(!map.has(item.id) || map.get(item.id).updatedAt < item.updatedAt){
+      map.set(item.id, item);
+    }
+  });
+
+  return Array.from(map.values());
+}
+
+render();
+
+// ================== HYBRID CLOUD SYNC ==================
+
+let unsubscribeListener = null;
+
+function startRealtimeSync(){
+
+  if(!currentUser) return;
+
+  const ref = collection(db,"users",currentUser.uid,"transactions");
+
+  if(unsubscribeListener){
+    unsubscribeListener();
+  }
+
+  unsubscribeListener = onSnapshot(ref,(snapshot)=>{
+
+    const cloudData = [];
+
+    snapshot.forEach(doc=>{
+      cloudData.push(doc.data());
     });
 
-    // --- FIRESTORE DATA ---
-    function listenToData() {
-      // NOTE: Ensure you have an index in Firebase if using orderBy with where
-      db.collection('user_hisab')
-        .where('userId', '==', currentUser.uid)
-        .orderBy('timestamp', 'desc')
-        .onSnapshot(snapshot => {
-          const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          renderUI(entries);
-        }, error => {
-          console.error("Firestore Error:", error);
-          // If orderBy fails due to missing index, fallback to simple query
-          db.collection('user_hisab').where('userId', '==', currentUser.uid).onSnapshot(s => {
-             const entries = s.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-             renderUI(entries);
-          });
-        });
-    }
+    const localData = getLocalData();
+    const merged = mergeData(localData,cloudData);
 
-    async function saveEntry() {
-      const amt = parseFloat(document.getElementById('amtInp').value);
-      const note = document.getElementById('noteInp').value;
-      const type = document.getElementById('typeSel').value;
+    setLocalData(merged);
+    render();
 
-      if (!amt || amt <= 0) return alert("Sahi amount bharein!");
+  });
+}
 
-      await db.collection('user_hisab').add({
-        userId: currentUser.uid,
-        amount: amt,
-        note: note || 'General',
-        type: type,
-        date: new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short' }),
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
+// ================== PUSH TO CLOUD ==================
 
-      closeModal();
-    }
+async function pushToCloud(){
 
-    async function deleteEntry(id) {
-      if(confirm("Delete karein?")) {
-        await db.collection('user_hisab').doc(id).delete();
-      }
-    }
+  if(!currentUser) return;
 
-    // --- UI RENDERING ---
-    function renderUI(entries) {
-      const listEl = document.getElementById('mainList');
-      listEl.innerHTML = '';
-      
-      let totalIn = 0, totalOut = 0;
+  const data = getLocalData();
+  const ref = collection(db,"users",currentUser.uid,"transactions");
 
-      entries.forEach(e => {
-        if (e.type === 'in') totalIn += e.amount; else totalOut += e.amount;
-        
-        listEl.innerHTML += `
-          <div class="tile ${e.type}">
-            <div>
-              <div style="font-weight:700; font-size:18px">${e.type === 'in' ? '+' : '-'} ₹${e.amount}</div>
-              <div style="font-size:13px; color:var(--muted)">${e.note} • ${e.date || ''}</div>
-            </div>
-            <button class="iconBtn" onclick="deleteEntry('${e.id}')">🗑️</button>
-          </div>`;
-      });
+  for(const item of data){
+    await setDoc(
+      doc(db,"users",currentUser.uid,"transactions",item.id),
+      item
+    );
+  }
+}
 
-      document.getElementById('sumIn').textContent = '₹' + totalIn;
-      document.getElementById('sumOut').textContent = '₹' + totalOut;
-      document.getElementById('balanceAmt').textContent = '₹' + (totalIn - totalOut);
-      
-      updateChart(totalIn, totalOut);
-    }
+// ================== AUTO SYNC ON LOGIN ==================
 
-    function updateChart(tin, tout) {
-      const ctx = document.getElementById('chartSmall').getContext('2d');
-      if (myChart) myChart.destroy();
-      
-      if(tin === 0 && tout === 0) return; // Don't draw if empty
+onAuthStateChanged(auth,(user)=>{
 
-      myChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['In', 'Out'],
-          datasets: [{
-            data: [tin, tout],
-            backgroundColor: ['#24c28b', '#ff6b6b'],
-            borderWidth: 0,
-            hoverOffset: 4
-          }]
-        },
-        options: {
-          cutout: '70%',
-          plugins: { legend: { display: false } }
-        }
-      });
-    }
+  if(user){
+    currentUser = user;
+    startRealtimeSync();
+  }else{
+    currentUser = null;
+    setLocalData([]);
+    render();
+  }
 
-    // --- MODAL & EXPORT ---
-    function openAdd(type) {
-      document.getElementById('typeSel').value = type;
-      document.getElementById('modalAdd').style.display = 'flex';
-      document.getElementById('amtInp').focus();
-    }
+});
 
-    function closeModal() {
-      document.getElementById('modalAdd').style.display = 'none';
-      document.getElementById('amtInp').value = '';
-      document.getElementById('noteInp').value = '';
-    }
+// ================== EXPORT BACKUP ==================
 
-    function exportPDF() {
-      const element = document.getElementById('mainList');
-      const opt = {
-        margin: 10,
-        filename: 'Hisab_Prem_Report.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: '#071117' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-      html2pdf().set(opt).from(element).save();
-    }
-  </script>
-</body>
-</html>
+window.exportData = function(){
+
+  const data = getLocalData();
+  const blob = new Blob([JSON.stringify(data,null,2)],{
+    type:"application/json"
+  });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "backup.json";
+  a.click();
+};
+
+// ================== IMPORT BACKUP ==================
+
+window.importData = function(event){
+
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+
+    const importedData = JSON.parse(e.target.result);
+    const localData = getLocalData();
+    const merged = mergeData(localData,importedData);
+
+    setLocalData(merged);
+    render();
+    pushToCloud();
+  };
+
+  reader.readAsText(file);
+};
+
+console.log("🔥 HYBRID ENGINE READY 🔥");
