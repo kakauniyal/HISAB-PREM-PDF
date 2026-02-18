@@ -1,37 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HISAB-PREM</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js"></script>
+    <title>HISAB PREM PDF</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com.firebasejs/9.6.1/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging.js"></script>
 </head>
 <body>
-    <div id="app">
-        <h1>HISAB-PREM</h1>
-        <div id="auth-modal">
-            <h2>Login</h2>
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password">
-            <button id="login-btn">Login</button>
-            <button id="signup-btn">Sign Up</button>
-            <div id="error-message"></div>
+    <h1>Welcome to HISAB PREM PDF</h1>
+    <div id="user-signed-out" class="hidden">
+        <h2>Please sign in</h2>
+        <button id="signin-button">Sign In</button>
+    </div>
+    <div id="user-signed-in" class="hidden">
+        <h2>Welcome, <span id="user-name"></span></h2>
+        <button id="signout-button">Sign Out</button>
+        <div id="entry-form">
+            <input type="text" id="entry-input" placeholder="Enter your entry" />
+            <button id="add-entry-button">Add Entry</button>
         </div>
-        <div id="data-sync-status"></div>
-        <div id="entries">
-            <!-- Add, Edit, Delete functionality here -->
-        </div>
-        <button id="export-btn">Export as PDF</button>
-        <div id="charts">
-            <!-- Chart rendering logic here -->
-        </div>
+        <div id="entry-list"></div>
+        <button id="export-pdf-button">Export PDF</button>
+        <div id="chart-container"></div>
     </div>
     <script>
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
             authDomain: "hisabprem.firebaseapp.com",
@@ -46,34 +42,47 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Handle user authentication
-        document.getElementById('login-btn').onclick = function() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            auth.signInWithEmailAndPassword(email, password).catch(function(error) {
-                document.getElementById('error-message').innerText = error.message;
-            });
-        };
-
-        document.getElementById('signup-btn').onclick = function() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            auth.createUserWithEmailAndPassword(email, password).catch(function(error) {
-                document.getElementById('error-message').innerText = error.message;
-            });
-        };
-
-        // Real-time Data Sync
-        db.collection('entries').onSnapshot(function(snapshot) {
-            snapshot.forEach(function(doc) {
-                // logic to update entries in the UI
-            });
+        // User Authentication
+        document.getElementById('signin-button').addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider);
         });
 
-        // Error Handling logic
-        // User isolation and security rules handled in Firestore
+        document.getElementById('signout-button').addEventListener('click', () => {
+            auth.signOut();
+        });
 
-        // Sync status indicator logic here
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('user-name').textContent = user.displayName;
+                document.getElementById('user-signed-out').classList.add('hidden');
+                document.getElementById('user-signed-in').classList.remove('hidden');
+                loadEntries();
+            } else {
+                document.getElementById('user-signed-out').classList.remove('hidden');
+                document.getElementById('user-signed-in').classList.add('hidden');
+            }
+        });
+
+        // Firestore CRUD Operations
+        function loadEntries() {
+            const entryList = document.getElementById('entry-list');
+            entryList.innerHTML = '';
+            db.collection('entries').onSnapshot(snapshot => {
+                snapshot.forEach(doc => {
+                    const entry = document.createElement('div');
+                    entry.textContent = doc.data().text;
+                    entryList.appendChild(entry);
+                });
+            });
+        }
+
+        document.getElementById('add-entry-button').addEventListener('click', () => {
+            const entryText = document.getElementById('entry-input').value;
+            db.collection('entries').add({ text: entryText });
+        });
+
+        // PDF Export and Chart generation can be implemented here.
     </script>
 </body>
 </html>
