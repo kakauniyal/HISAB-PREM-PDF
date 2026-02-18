@@ -3,655 +3,292 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>HISAB PREM — Firebase Sync</title>
+  <title>HISAB PREM — Cloud Sync</title>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-
-  <!-- Charts & PDF Export -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/2.9.0/dom-to-image-more.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{
+    :root {
       --bg:#071117; --card:#0b1113; --accent:#1e6bf0; --green:#24c28b; --red:#ff6b6b; --muted:#98a2a6; --text:#eaf2f5;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#041018);color:var(--text);-webkit-font-smoothing:antialiased}
-    .appbar{display:flex;align-items:center;padding:12px 16px;background:linear-gradient(90deg,var(--accent),#1e88e5);box-shadow:0 6px 20px rgba(0,0,0,0.45)}
-    .logo{display:flex;align-items:center;gap:10px}
-    .logo svg{width:44px;height:44px}
-    .title{font-weight:700;font-size:18px}
-    .time{margin-left:auto;font-weight:600;font-size:13px;color:rgba(255,255,255,0.95)}
-    .userInfo{margin-left:16px;font-size:12px;color:rgba(255,255,255,0.9)}
-    .logoutBtn{padding:6px 12px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:white;font-weight:600;cursor:pointer;margin-left:8px}
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
     
-    .container{max-width:980px;margin:14px auto;padding:0 16px}
-    .authContainer{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;z-index:200}
-    .authCard{background:linear-gradient(180deg,#071417,#07181a);border-radius:12px;padding:24px;box-shadow:0 28px 80px rgba(0,0,0,0.7);width:92%;max-width:400px}
-    .authCard h2{margin-top:0;color:var(--accent)}
-    .authInput{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:inherit;margin-top:12px;font-size:16px}
-    .authBtn{width:100%;padding:12px;margin-top:12px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--accent),#1e88e5);color:white;font-weight:700;cursor:pointer}
-    .authError{color:var(--red);font-size:13px;margin-top:8px}
-    .authLink{color:var(--accent);cursor:pointer;text-decoration:underline;font-size:14px;margin-top:8px}
-    
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));border-radius:12px;padding:14px;box-shadow:0 10px 36px rgba(0,0,0,0.5)}
-    .balanceRow{display:flex;gap:16px;align-items:center}
-    .balanceLeft{flex:1}
-    .balanceTitle{font-size:13px;color:#cfeee4}
-    .balanceAmt{font-weight:800;font-size:28px;margin-top:6px}
-    .ratio{height:12px;background:#081217;border-radius:999px;margin-top:10px;position:relative;overflow:hidden}
-    .ratio .in{height:100%;background:linear-gradient(90deg,var(--green),#16a06f);width:50%}
-    .ratio .out{height:100%;background:linear-gradient(90deg,var(--red),#ff7b7b);position:absolute;right:0;top:0;width:50%}
-    .summary{display:flex;gap:10px;margin-top:12px}
-    .summary .box{flex:1;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:700}
-    .chartWrap{margin-top:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.03))}
-    #chartSmall{width:100%;height:100%;display:block;max-width:300px;max-height:300px;margin:0 auto;}
-    
-    .midControls{display:flex;align-items:center;gap:10px;margin-top:12px}
-    .smallBtn{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);font-weight:700;cursor:pointer}
-    .smallBtn.in{background:linear-gradient(90deg,var(--green),#12a76a);color:#042216}
-    .smallBtn.out{background:linear-gradient(90deg,var(--red),#ef6b6b);color:#2b0f0f}
-    .syncStatus{margin-left:auto;font-size:13px;color:var(--muted);font-weight:600}
-    .exportBtn{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:var(--text);font-weight:700;cursor:pointer;margin-left:8px}
-    
-    .list{margin-top:14px;display:flex;flex-direction:column;gap:12px;padding-bottom:120px}
-    .tile{display:flex;justify-content:space-between;align-items:flex-start;padding:14px;border-radius:10px;background:linear-gradient(180deg,#071116,#071216);box-shadow:0 8px 22px rgba(0,0,0,0.6);border-left:4px solid}
-    .leftCol{flex:1;padding-right:12px}
-    .amount{font-weight:800;font-size:20px}
-    .note{margin-top:6px;font-weight:700;font-size:14px;color:var(--text);white-space:pre-wrap}
-    .meta small{display:block;color:var(--muted);margin-top:8px}
-    .tile.in{border-left-color:var(--green)}
-    .tile.out{border-left-color:var(--red)}
-    .actionsCol{display:flex;flex-direction:column;gap:8px;margin-left:12px}
-    .iconBtn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
-    .iconBtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6}
-    
-    .fab{position:fixed;right:16px;bottom:18px;width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--green),#13a76b);display:none;align-items:center;justify-content:center;color:white;font-size:32px;cursor:pointer;box-shadow:0 10px 30px rgba(36,194,139,0.4);z-index:100}
-    
-    .modal{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:150}
-    .modalCard{width:92%;max-width:520px;background:linear-gradient(180deg,#071417,#07181a);border-radius:12px;padding:16px;box-shadow:0 28px 80px rgba(0,0,0,0.7)}
-    .input{width:100%;padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:inherit;margin-top:8px;font-size:18px;font-weight:600}
-    
-    .hidden{display:none!important}
-    .center{display:flex;align-items:center;justify-content:center}
-    
-    @media (max-width:700px){
-      .container{padding:0 12px}
-      .fab{right:12px;bottom:14px}
-      .userInfo{display:none}
+    /* Login Overlay */
+    #loginOverlay {
+      position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+      display: flex; align-items: center; justify-content: center; text-align: center;
     }
+    .loginCard { background: var(--card); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 400px; }
+    
+    /* App Layout */
+    .appbar { display: flex; align-items: center; padding: 12px 16px; background: linear-gradient(90deg, var(--accent), #1e88e5); position: sticky; top: 0; z-index: 100; }
+    .title { font-weight: 700; font-size: 18px; }
+    .container { max-width: 600px; margin: 14px auto; padding: 0 16px; }
+    .card { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 18px; border: 1px solid rgba(255,255,255,0.05); }
+    .balanceAmt { font-weight: 800; font-size: 32px; margin: 8px 0; }
+    .summary { display: flex; gap: 10px; margin-top: 15px; }
+    .summary .box { flex: 1; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.2); text-align: center; }
+
+    /* Buttons */
+    .smallBtn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 14px; }
+    .smallBtn.in { background: var(--green); color: #042216; }
+    .smallBtn.out { background: var(--red); color: #2b0f0f; }
+    .smallBtn.google { background: #fff; color: #000; margin-top: 20px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; }
+    .smallBtn:active { transform: scale(0.98); }
+
+    /* Transactions */
+    .list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 50px; }
+    .tile { display: flex; justify-content: space-between; align-items: center; padding: 14px; border-radius: 10px; background: var(--card); border-left: 5px solid transparent; }
+    .tile.in { border-left-color: var(--green); }
+    .tile.out { border-left-color: var(--red); }
+    .iconBtn { background: transparent; border: none; font-size: 18px; cursor: pointer; opacity: 0.6; }
+
+    /* Modal */
+    .modal { display: none; position: fixed; inset: 0; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); z-index: 200; padding: 20px; }
+    .modalCard { width: 100%; max-width: 400px; background: #111; border-radius: 15px; padding: 25px; border: 1px solid #333; }
+    .input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; margin-top: 12px; font-size: 16px; }
+    
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- Auth Modal -->
-  <div class="authContainer" id="authContainer">
-    <div class="authCard">
-      <h2 id="authTitle">🔐 Login</h2>
-      <input id="emailInp" class="authInput" type="email" placeholder="Email" />
-      <input id="passwordInp" class="authInput" type="password" placeholder="Password" />
-      <div id="authError" class="authError"></div>
-      <button id="authBtn" class="authBtn">Login</button>
-      <div style="text-align:center;margin-top:12px;font-size:13px">
-        <span id="toggleAuth" class="authLink">❓ Naya account banao</span>
-      </div>
+  <div id="loginOverlay">
+    <div class="loginCard">
+      <h1 style="margin:0; color:var(--accent)">HISAB PREM</h1>
+      <p style="color:var(--muted)">Apna data cloud par surakshit rakhein</p>
+      <button class="smallBtn google" onclick="login()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18" alt="G">
+        Login with Google
+      </button>
     </div>
   </div>
 
-  <!-- Appbar -->
-  <div class="appbar">
-    <div class="logo" aria-hidden>
-      <svg viewBox="0 0 140 60" xmlns="http://www.w3.org/2000/svg"><g transform="translate(6,6)"><text x="0" y="16" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#fff">HISAB</text><text x="0" y="36" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#fff">PREM</text></g></svg>
-    </div>
-    <div style="margin-left:10px">
+  <div id="appContent" class="hidden">
+    <div class="appbar">
       <div class="title">HISAB PREM</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.95)">Firebase Sync</div>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:10px">
+        <span id="userName" style="font-size:12px; opacity:0.8"></span>
+        <button onclick="logout()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:#fff; border-radius:5px; padding:4px 8px; cursor:pointer">Logout</button>
+      </div>
     </div>
-    <div class="time" id="appTime">--:--</div>
-    <div class="userInfo" id="userInfo"></div>
-    <button class="logoutBtn" id="logoutBtn" style="display:none;">🚪 Logout</button>
-  </div>
 
-  <!-- Main Content -->
-  <div class="container" id="mainContent" style="display:none">
-    <div class="card">
-      <div class="balanceRow">
-        <div class="balanceLeft">
-          <div class="balanceTitle">Current Balance</div>
-          <div id="balanceAmt" class="balanceAmt">₹0</div>
-          <div class="ratio" aria-hidden><div id="ratioIn" class="in" style="width:50%"></div><div id="ratioOut" class="out" style="width:50%"></div></div>
+    <div class="container">
+      <div class="card">
+        <div style="color:var(--muted); font-size:14px">Total Balance</div>
+        <div id="balanceAmt" class="balanceAmt">₹0</div>
+        
+        <div class="summary">
+          <div class="box">
+            <div style="color:var(--muted); font-size:12px">CASH IN</div>
+            <div id="sumIn" style="color:var(--green); font-weight:700">₹0</div>
+          </div>
+          <div class="box">
+            <div style="color:var(--muted); font-size:12px">CASH OUT</div>
+            <div id="sumOut" style="color:var(--red); font-weight:700">₹0</div>
+          </div>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:12px;color:var(--muted)">Overview</div>
-          <div style="margin-top:6px"><small class="meta" id="collectionInfo">✓ Firebase Sync Active</small></div>
+
+        <div style="height: 150px; margin: 20px 0; display: flex; justify-content: center;">
+          <canvas id="chartSmall"></canvas>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <button class="smallBtn in" onclick="openAdd('in')" style="flex:1">+ In</button>
+          <button class="smallBtn out" onclick="openAdd('out')" style="flex:1">- Out</button>
+          <button onclick="exportPDF()" style="background:#333; color:#fff; border-radius:10px; padding:0 15px; border:none; cursor:pointer">PDF</button>
         </div>
       </div>
 
-      <div class="summary" style="margin-top:12px">
-        <div class="box">Cash In<br/><div id="sumIn" style="font-size:18px;margin-top:6px">₹0</div></div>
-        <div class="box">Cash Out<br/><div id="sumOut" style="font-size:18px;margin-top:6px">₹0</div></div>
-        <div class="box">Balance<br/><div id="sumBal" style="font-size:18px;margin-top:6px">₹0</div></div>
-      </div>
-
-      <div class="chartWrap">
-        <canvas id="chartSmall" width="150" height="150"></canvas>
-      </div>
-
-      <div class="midControls">
-        <button class="smallBtn in" id="btnQuickIn">Cash In</button>
-        <button class="smallBtn out" id="btnQuickOut">Cash Out</button>
-        <div class="syncStatus" id="syncStatus">Connecting...</div>
-        <button id="exportBtn" class="exportBtn" title="Export PDF">📄 Export</button>
-      </div>
+      <div class="list" id="mainList">
+        </div>
     </div>
 
-    <div id="page-in" class="page">
-      <h3 style="margin-top:18px">Recent Cash In</h3>
-      <div id="listIn" class="list"></div>
-    </div>
-
-    <div id="page-out" class="page hidden">
-      <h3 style="margin-top:18px">Recent Cash Out</h3>
-      <div id="listOut" class="list"></div>
-    </div>
-  </div>
-
-  <button class="fab" id="fabAdd">➕</button>
-
-  <!-- Modal for Add/Edit -->
-  <div class="modal" id="modalAdd">
-    <div class="modalCard" role="dialog" aria-modal="true">
-      <h3 id="modalTitle">Add / Edit Entry</h3>
-      <select id="typeSel" class="input">
-        <option value="in">Cash In</option>
-        <option value="out">Cash Out</option>
-      </select>
-      <input id="amtInp" class="input" type="text" placeholder="Amount (₹)" />
-      <input id="noteInp" class="input" type="text" placeholder="Note (optional)" />
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
-        <button id="saveBtn" class="input" style="background:linear-gradient(135deg,var(--green),#13a76b);color:#042216;font-weight:800">Save</button>
-        <button id="cancelBtn" class="input" style="background:transparent;border:1px solid rgba(255,255,255,0.03)">Cancel</button>
+    <div class="modal" id="modalAdd">
+      <div class="modalCard">
+        <h3 id="modalTitle" style="margin-top:0">Add Transaction</h3>
+        <select id="typeSel" class="input">
+          <option value="in">Cash In (+)</option>
+          <option value="out">Cash Out (-)</option>
+        </select>
+        <input id="amtInp" class="input" type="number" placeholder="Amount (₹)" inputmode="numeric" />
+        <input id="noteInp" class="input" type="text" placeholder="Note (e.g. Salary, Rent)" />
+        <div style="display:flex; gap:10px; margin-top:20px">
+          <button onclick="saveEntry()" class="smallBtn in" style="flex:2">Save Transaction</button>
+          <button onclick="closeModal()" class="smallBtn" style="flex:1; background:#333; color:#fff">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
-
-  <div id="printArea" style="display:none"></div>
 
   <script>
-    /* Firebase Configuration */
+    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
       apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
       authDomain: "hisabprem.firebaseapp.com",
       projectId: "hisabprem",
-      storageBucket: "hisabprem.appspot.com",
+      storageBucket: "hisabprem.firebasestorage.app",
       messagingSenderId: "299571413492",
-      appId: "1:299571413492:web:de65e2a8d3544060fcb9a1"
+      appId: "1:299571413492:web:de65e2a8d3544060fcb9a1",
+      measurementId: "G-6DJE8XPXQ5" 
     };
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    /* State */
     let currentUser = null;
-    let entriesIn = [];
-    let entriesOut = [];
-    let editingItem = null;
-    let isSignUp = false;
+    let myChart = null;
 
-    /* DOM Refs */
-    const qs = sel => document.querySelector(sel);
-    const authContainer = qs('#authContainer');
-    const emailInp = qs('#emailInp');
-    const passwordInp = qs('#passwordInp');
-    const authBtn = qs('#authBtn');
-    const authTitle = qs('#authTitle');
-    const toggleAuth = qs('#toggleAuth');
-    const authError = qs('#authError');
-    const userInfo = qs('#userInfo');
-    const logoutBtn = qs('#logoutBtn');
-    const mainContent = qs('#mainContent');
+    // --- AUTH ---
+    function login() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(err => alert("Login Error: " + err.message));
+    }
 
-    /* Helpers */
-    function nowStr(ts){ return new Date(ts||Date.now()).toLocaleString('hi-IN'); }
-    function safeNum(v){ const n = Number(v); return Number.isFinite(n) ? n : null; }
-    function fmt(n){ return Number(n).toLocaleString('hi-IN'); }
-    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function logout() {
+      auth.signOut().then(() => window.location.reload());
+    }
 
-    /* Auth Handlers */
-    toggleAuth.addEventListener('click', ()=>{
-      isSignUp = !isSignUp;
-      authTitle.textContent = isSignUp ? '✍️ New Account' : '🔐 Login';
-      authBtn.textContent = isSignUp ? 'Sign Up' : 'Login';
-      toggleAuth.textContent = isSignUp ? '❓ Already have account?' : '❓ Naya account banao';
-      authError.textContent = '';
-    });
-
-    authBtn.addEventListener('click', async ()=>{
-      const email = emailInp.value.trim();
-      const password = passwordInp.value;
-
-      if(!email || !password){
-        authError.textContent = 'Email aur password zaroori hai';
-        return;
-      }
-
-      try{
-        authBtn.disabled = true;
-        authBtn.textContent = 'Processing...';
-        
-        if(isSignUp){
-          await auth.createUserWithEmailAndPassword(email, password);
-          authError.textContent = '✅ Account create ho gaya! Ab login karo.';
-          isSignUp = false;
-          authTitle.textContent = '🔐 Login';
-          authBtn.textContent = 'Login';
-          toggleAuth.textContent = '❓ Naya account banao';
-          emailInp.value = '';
-          passwordInp.value = '';
-        } else {
-          await auth.signInWithEmailAndPassword(email, password);
-        }
-        
-        authBtn.disabled = false;
-      }catch(err){
-        authError.textContent = err.message;
-        authBtn.disabled = false;
-        authBtn.textContent = isSignUp ? 'Sign Up' : 'Login';
-      }
-    });
-
-    passwordInp.addEventListener('keypress', (e)=>{ if(e.key === 'Enter') authBtn.click(); });
-
-    logoutBtn.addEventListener('click', async ()=>{ await auth.signOut(); });
-
-    /* Auth State */
-    auth.onAuthStateChanged(async (user)=>{
-      if(user){
+    auth.onAuthStateChanged(user => {
+      if (user) {
         currentUser = user;
-        authContainer.style.display = 'none';
-        mainContent.style.display = 'block';
-        qs('#fabAdd').style.display = 'flex';
-        logoutBtn.style.display = 'block';
-        userInfo.textContent = `👤 ${user.email}`;
-        loadUserData(user.uid);
+        document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('appContent').classList.remove('hidden');
+        document.getElementById('userName').textContent = user.displayName.split(' ')[0];
+        listenToData();
       } else {
-        currentUser = null;
-        authContainer.style.display = 'flex';
-        mainContent.style.display = 'none';
-        qs('#fabAdd').style.display = 'none';
-        logoutBtn.style.display = 'none';
-        entriesIn = [];
-        entriesOut = [];
+        document.getElementById('loginOverlay').classList.remove('hidden');
+        document.getElementById('appContent').classList.add('hidden');
       }
     });
 
-    /* Load Data from Firestore */
-    function loadUserData(uid){
-      const refIn = db.collection('users').doc(uid).collection('entries').where('type', '==', 'in');
-      refIn.onSnapshot((snapshot)=>{
-        entriesIn = [];
-        snapshot.forEach(doc => {
-          entriesIn.push({...doc.data(), id: doc.id});
+    // --- FIRESTORE DATA ---
+    function listenToData() {
+      // NOTE: Ensure you have an index in Firebase if using orderBy with where
+      db.collection('user_hisab')
+        .where('userId', '==', currentUser.uid)
+        .orderBy('timestamp', 'desc')
+        .onSnapshot(snapshot => {
+          const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          renderUI(entries);
+        }, error => {
+          console.error("Firestore Error:", error);
+          // If orderBy fails due to missing index, fallback to simple query
+          db.collection('user_hisab').where('userId', '==', currentUser.uid).onSnapshot(s => {
+             const entries = s.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+             renderUI(entries);
+          });
         });
-        renderAll();
-        updateSyncStatus(true);
-      }, (error)=>{
-        console.error('Load in error:', error);
-        updateSyncStatus(false);
+    }
+
+    async function saveEntry() {
+      const amt = parseFloat(document.getElementById('amtInp').value);
+      const note = document.getElementById('noteInp').value;
+      const type = document.getElementById('typeSel').value;
+
+      if (!amt || amt <= 0) return alert("Sahi amount bharein!");
+
+      await db.collection('user_hisab').add({
+        userId: currentUser.uid,
+        amount: amt,
+        note: note || 'General',
+        type: type,
+        date: new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short' }),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      const refOut = db.collection('users').doc(uid).collection('entries').where('type', '==', 'out');
-      refOut.onSnapshot((snapshot)=>{
-        entriesOut = [];
-        snapshot.forEach(doc => {
-          entriesOut.push({...doc.data(), id: doc.id});
-        });
-        renderAll();
-        updateSyncStatus(true);
-      }, (error)=>{
-        console.error('Load out error:', error);
-        updateSyncStatus(false);
+      closeModal();
+    }
+
+    async function deleteEntry(id) {
+      if(confirm("Delete karein?")) {
+        await db.collection('user_hisab').doc(id).delete();
+      }
+    }
+
+    // --- UI RENDERING ---
+    function renderUI(entries) {
+      const listEl = document.getElementById('mainList');
+      listEl.innerHTML = '';
+      
+      let totalIn = 0, totalOut = 0;
+
+      entries.forEach(e => {
+        if (e.type === 'in') totalIn += e.amount; else totalOut += e.amount;
+        
+        listEl.innerHTML += `
+          <div class="tile ${e.type}">
+            <div>
+              <div style="font-weight:700; font-size:18px">${e.type === 'in' ? '+' : '-'} ₹${e.amount}</div>
+              <div style="font-size:13px; color:var(--muted)">${e.note} • ${e.date || ''}</div>
+            </div>
+            <button class="iconBtn" onclick="deleteEntry('${e.id}')">🗑️</button>
+          </div>`;
+      });
+
+      document.getElementById('sumIn').textContent = '₹' + totalIn;
+      document.getElementById('sumOut').textContent = '₹' + totalOut;
+      document.getElementById('balanceAmt').textContent = '₹' + (totalIn - totalOut);
+      
+      updateChart(totalIn, totalOut);
+    }
+
+    function updateChart(tin, tout) {
+      const ctx = document.getElementById('chartSmall').getContext('2d');
+      if (myChart) myChart.destroy();
+      
+      if(tin === 0 && tout === 0) return; // Don't draw if empty
+
+      myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['In', 'Out'],
+          datasets: [{
+            data: [tin, tout],
+            backgroundColor: ['#24c28b', '#ff6b6b'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          cutout: '70%',
+          plugins: { legend: { display: false } }
+        }
       });
     }
 
-    /* Render */
-    function tileHTML(e){
-      const note = escapeHtml(e.note || '');
-      const date = escapeHtml(e.date || nowStr());
-      const amount = fmt(e.amount || 0);
-      const cls = e.type === 'out' ? 'out' : 'in';
-      return `<div class="tile ${cls}" data-id="${e.id}">
-        <div class="leftCol">
-          <div class="amount">₹${amount}</div>
-          <div class="note">${note || '&nbsp;'}</div>
-          <div class="meta"><small>${date}</small></div>
-        </div>
-        <div class="actionsCol">
-          <button class="iconBtn" title="Edit" onclick="openEdit('${e.id}','${e.type}')">
-            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="iconBtn" title="Delete" onclick="deleteEntry('${e.id}','${e.type}')">
-            <svg viewBox="0 0 24 24"><path d="M3 6h18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-      </div>`;
+    // --- MODAL & EXPORT ---
+    function openAdd(type) {
+      document.getElementById('typeSel').value = type;
+      document.getElementById('modalAdd').style.display = 'flex';
+      document.getElementById('amtInp').focus();
     }
 
-    function renderLists(){
-      const listInEl = qs('#listIn');
-      const listOutEl = qs('#listOut');
-      
-      listInEl.innerHTML = '';
-      listOutEl.innerHTML = '';
-      
-      if(entriesIn.length === 0) 
-        listInEl.innerHTML = '<div style="color:var(--muted);padding:12px;border-radius:10px">No Cash In entries</div>';
-      else 
-        entriesIn.forEach(e => listInEl.insertAdjacentHTML('beforeend', tileHTML(e)));
-      
-      if(entriesOut.length === 0) 
-        listOutEl.innerHTML = '<div style="color:var(--muted);padding:12px;border-radius:10px">No Cash Out entries</div>';
-      else 
-        entriesOut.forEach(e => listOutEl.insertAdjacentHTML('beforeend', tileHTML(e)));
+    function closeModal() {
+      document.getElementById('modalAdd').style.display = 'none';
+      document.getElementById('amtInp').value = '';
+      document.getElementById('noteInp').value = '';
     }
 
-    function renderSummary(){
-      const totalIn = entriesIn.reduce((s,x)=>s + (Number(x.amount)||0),0);
-      const totalOut = entriesOut.reduce((s,x)=>s + (Number(x.amount)||0),0);
-      
-      qs('#sumIn').textContent = '₹' + fmt(totalIn);
-      qs('#sumOut').textContent = '₹' + fmt(totalOut);
-      qs('#sumBal').textContent = '₹' + fmt(totalIn - totalOut);
-      qs('#balanceAmt').textContent = '₹' + fmt(totalIn - totalOut);
-      
-      const total = (totalIn + totalOut) || 1;
-      qs('#ratioIn').style.width = Math.round((totalIn/total)*100) + '%';
-      qs('#ratioOut').style.width = Math.round((totalOut/total)*100) + '%';
+    function exportPDF() {
+      const element = document.getElementById('mainList');
+      const opt = {
+        margin: 10,
+        filename: 'Hisab_Prem_Report.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, backgroundColor: '#071117' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
     }
-
-    function renderChart(){
-      try{
-        const ctx = qs('#chartSmall').getContext('2d');
-        const totalIn = entriesIn.reduce((s,x)=>s + (Number(x.amount)||0),0);
-        const totalOut = entriesOut.reduce((s,x)=>s + (Number(x.amount)||0),0);
-        
-        if(window._donut) window._donut.destroy();
-        
-        const canvas = qs('#chartSmall');
-        canvas.width = 150;
-        canvas.height = 150;
-        
-        window._donut = new Chart(ctx,{
-          type:'doughnut',
-          data:{ labels:['Cash In','Cash Out'], datasets:[{ data:[totalIn,totalOut], backgroundColor:['#24c28b','#ff6b6b'] }]},
-          options:{ responsive:false, maintainAspectRatio:false, cutout:'70%', plugins:{legend:{display:false}}}
-        });
-      }catch(e){ console.warn('chart', e); }
-    }
-
-    function renderAll(){ renderSummary(); renderLists(); renderChart(); }
-
-    /* Add / Edit / Delete */
-    function openAdd(type='in'){
-      editingItem = null;
-      qs('#modalTitle').textContent = 'Add Entry';
-      qs('#typeSel').value = type;
-      qs('#amtInp').value = '';
-      qs('#noteInp').value = '';
-      qs('#modalAdd').style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-      setTimeout(()=>{ try{ qs('#amtInp').focus(); }catch(e){} },50);
-    }
-
-    function openEdit(id, type){
-      const list = type === 'in' ? entriesIn : entriesOut;
-      const e = list.find(x=>String(x.id) === String(id));
-      if(!e) return;
-      
-      editingItem = { id: e.id, type };
-      qs('#modalTitle').textContent = 'Edit Entry';
-      qs('#typeSel').value = type;
-      qs('#amtInp').value = String(e.amount || '');
-      qs('#noteInp').value = e.note || '';
-      qs('#modalAdd').style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-      setTimeout(()=>{ try{ qs('#amtInp').focus(); }catch(e){} },50);
-    }
-
-    function closeModal(){
-      qs('#modalAdd').style.display = 'none';
-      editingItem = null;
-      document.body.style.overflow = '';
-    }
-
-    async function saveEntry(){
-      if(!currentUser) return;
-
-      let amtVal = qs('#amtInp').value || '';
-      const dr = qs('#amtInp').getAttribute('data-result');
-      if(dr !== null && dr !== undefined && dr !== '') amtVal = dr;
-      
-      const amt = safeNum(amtVal);
-      const note = (qs('#noteInp').value || '').trim();
-      const type = qs('#typeSel').value === 'out' ? 'out' : 'in';
-      
-      if(amt === null || amt <= 0) { 
-        qs('#amtInp').focus(); 
-        return; 
-      }
-
-      const uid = currentUser.uid;
-      const now = Date.now();
-      
-      try{
-        if(editingItem){
-          await db.collection('users').doc(uid).collection('entries').doc(editingItem.id).delete();
-        }
-        
-        const entryData = {
-          amount: amt,
-          note,
-          date: nowStr(now),
-          type,
-          updatedAt: new Date()
-        };
-        
-        await db.collection('users').doc(uid).collection('entries').add(entryData);
-        closeModal();
-      }catch(err){
-        console.error('Save error:', err);
-        alert('Error saving entry: ' + err.message);
-      }
-    }
-
-    async function deleteEntry(id, type){
-      if(!currentUser) return;
-      if(!confirm('Delete this entry?')) return;
-      
-      try{
-        const uid = currentUser.uid;
-        await db.collection('users').doc(uid).collection('entries').doc(id).delete();
-      }catch(err){
-        console.error('Delete error:', err);
-        alert('Error deleting entry: ' + err.message);
-      }
-    }
-
-    function updateSyncStatus(online){
-      qs('#syncStatus').textContent = online ? '✓ Synced' : '⚠ Offline';
-    }
-
-    /* Live Time */
-    function tickTime(){ 
-      qs('#appTime').textContent = new Date().toLocaleTimeString('hi-IN', {hour:'2-digit',minute:'2-digit'}); 
-    }
-    setInterval(tickTime,1000); 
-    tickTime();
-
-    /* Amount Calculator */
-    qs('#amtInp').addEventListener("input", (e) => {
-      const val = e.target.value;
-      try {
-        if (/^[0-9+\-*/.() ]+$/.test(val)) {
-          const calc = Function("return " + val)();
-          if (!isNaN(calc)) e.target.setAttribute("data-result", calc);
-          else e.target.removeAttribute("data-result");
-        } else {
-          e.target.removeAttribute("data-result");
-        }
-      } catch {
-        e.target.removeAttribute("data-result");
-      }
-    });
-
-    /* Modal Handlers */
-    qs('#saveBtn').addEventListener('click', saveEntry);
-    qs('#cancelBtn').addEventListener('click', closeModal);
-    qs('#fabAdd').addEventListener('click', ()=> openAdd('in'));
-    qs('#btnQuickIn').addEventListener('click', ()=> {
-      qs('#page-in').classList.remove('hidden');
-      qs('#page-out').classList.add('hidden');
-    });
-    qs('#btnQuickOut').addEventListener('click', ()=> {
-      qs('#page-out').classList.remove('hidden');
-      qs('#page-in').classList.add('hidden');
-    });
-
-    qs('#modalAdd').addEventListener('click', (ev)=>{ if(ev.target === qs('#modalAdd')) closeModal(); });
-    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeModal(); });
-
-    /* Export PDF */
-    async function exportPDF(){
-      const combined = (entriesIn || []).concat(entriesOut || []);
-      if(!combined || combined.length === 0){
-        alert('No entries to export');
-        return;
-      }
-
-      try{
-        const print = qs('#printArea');
-        print.innerHTML = '';
-        
-        const container = document.createElement('div');
-        container.style.width = '720px';
-        container.style.background = '#ffffff';
-        container.style.padding = '18px';
-        container.style.border = '4px solid #1e6bf0';
-        container.style.borderRadius = '8px';
-        container.style.boxSizing = 'border-box';
-        container.style.color = '#111';
-        container.style.fontFamily = 'Arial, Helvetica, sans-serif';
-        container.style.fontSize = '12px';
-
-        const header = document.createElement('div');
-        header.style.display='flex';
-        header.style.justifyContent='space-between';
-        header.style.alignItems='flex-start';
-        header.style.marginBottom='12px';
-        header.innerHTML = `<div style="font-weight:800;color:#0b3db8;font-size:20px">HISAB PREM</div>`;
-        const genDate = new Date().toLocaleString('hi-IN');
-        header.innerHTML += `<div style="text-align:right">
-          <div style="font-weight:800;color:#0b3db8;font-size:16px">Account Statement</div>
-          <div style="font-size:11px;color:#333;margin-top:6px">Generated: ${genDate}</div>
-          <div style="font-size:11px;color:#666">User: ${currentUser.email}</div>
-        </div>`;
-        container.appendChild(header);
-
-        const inTotal = entriesIn.reduce((s,x)=>s+Number(x.amount||0),0);
-        const outTotal = entriesOut.reduce((s,x)=>s+Number(x.amount||0),0);
-        const balance = inTotal - outTotal;
-        const summary = document.createElement('div');
-        summary.style.display='flex';
-        summary.style.gap='10px';
-        summary.style.marginBottom='12px';
-        summary.innerHTML = `
-          <div style="flex:1;padding:10px;background:#f7f9ff;border-radius:6px;border:1px solid #eef7ff;text-align:center">
-            <div style="font-size:12px;color:#444">Cash In</div>
-            <div style="font-weight:800;font-size:16px;color:#1e6bf0">₹${fmt(inTotal)}</div>
-          </div>
-          <div style="flex:1;padding:10px;background:#fff7f7;border-radius:6px;border:1px solid #fff0f0;text-align:center">
-            <div style="font-size:12px;color:#444">Cash Out</div>
-            <div style="font-weight:800;font-size:16px;color:#ff6b6b">₹${fmt(outTotal)}</div>
-          </div>
-          <div style="flex:1;padding:10px;background:#f7fbff;border-radius:6px;border:1px solid #eaf4ff;text-align:center">
-            <div style="font-size:12px;color:#444">Balance</div>
-            <div style="font-weight:800;font-size:16px;color:#24c28b">₹${fmt(balance)}</div>
-          </div>
-        `;
-        container.appendChild(summary);
-
-        const table = document.createElement('table');
-        table.style.width='100%';
-        table.style.borderCollapse='collapse';
-        table.style.fontSize='11px';
-        table.style.marginTop='12px';
-        table.innerHTML = `<thead><tr style="background:#f0f6ff">
-          <th style="border:1px solid #e6f3ff;padding:6px;text-align:left;width:150px">Date / Time</th>
-          <th style="border:1px solid #e6f3ff;padding:6px;text-align:left;width:80px">Type</th>
-          <th style="border:1px solid #e6f3ff;padding:6px;text-align:right;width:80px">Amount</th>
-          <th style="border:1px solid #e6f3ff;padding:6px;text-align:left">Note</th>
-        </tr></thead>`;
-        
-        const tbody = document.createElement('tbody');
-        const combinedAll = (entriesIn || []).map(e=>({...e,_type:'Cash In'})).concat((entriesOut || []).map(e=>({...e,_type:'Cash Out'})));
-        combinedAll.sort((a,b)=> (b.updatedAt || b.id || 0) - (a.updatedAt || a.id || 0));
-        
-        combinedAll.forEach(r=>{
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td style="border:1px solid #eef7ff;padding:6px;color:#111">${escapeHtml(r.date || nowStr(r.updatedAt))}</td>
-            <td style="border:1px solid #eef7ff;padding:6px;color:#111">${r._type}</td>
-            <td style="border:1px solid #eef7ff;padding:6px;color:#111;text-align:right;font-weight:600">₹${Number(r.amount).toLocaleString('hi-IN')}</td>
-            <td style="border:1px solid #eef7ff;padding:6px;color:#111">${escapeHtml(r.note || '')}</td>`;
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-        container.appendChild(table);
-
-        const footer = document.createElement('div');
-        footer.style.fontSize = '10px';
-        footer.style.color = '#666';
-        footer.style.marginTop = '12px';
-        footer.style.textAlign = 'center';
-        footer.textContent = 'Generated by HISAB PREM with Firebase Sync';
-        container.appendChild(footer);
-
-        print.appendChild(container);
-        print.style.display='block';
-
-        const filename = 'HISAB_PREM_Statement.pdf';
-        const opt = {
-          margin: [8, 8, 8, 8],
-          filename: filename,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, allowTaint: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        await html2pdf().set(opt).from(container).save();
-        print.style.display='none';
-      }catch(err){
-        console.error('exportPDF error', err);
-        alert('PDF export failed');
-      }
-    }
-
-    qs('#exportBtn').addEventListener('click', exportPDF);
-
-    /* Expose to global */
-    window.openEdit = openEdit;
-    window.deleteEntry = deleteEntry;
-
-    /* Init */
-    window.addEventListener('load', ()=>{
-      authContainer.style.display = 'flex';
-      mainContent.style.display = 'none';
-    });
   </script>
 </body>
 </html>
