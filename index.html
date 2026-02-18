@@ -319,7 +319,12 @@
       unsubscribeIn = userCol('in')
         .orderBy('updatedAt','desc')
         .onSnapshot({ includeMetadataChanges: true }, snap => {
+          // Skip snapshots from local pending writes to avoid flicker/duplicates
+          if(snap.metadata.hasPendingWrites) return;
           entriesIn = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+          // Deduplicate by id just in case
+          const seen = new Set();
+          entriesIn = entriesIn.filter(e => { if(seen.has(e.id)) return false; seen.add(e.id); return true; });
           persistLocal();
           inReady = true;
           if(outReady) updateSyncUI(snap.metadata.fromCache);
@@ -334,7 +339,10 @@
       unsubscribeOut = userCol('out')
         .orderBy('updatedAt','desc')
         .onSnapshot({ includeMetadataChanges: true }, snap => {
+          if(snap.metadata.hasPendingWrites) return;
           entriesOut = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+          const seen = new Set();
+          entriesOut = entriesOut.filter(e => { if(seen.has(e.id)) return false; seen.add(e.id); return true; });
           persistLocal();
           outReady = true;
           if(inReady) updateSyncUI(snap.metadata.fromCache);
@@ -447,38 +455,63 @@
       const note = (noteInp.value||'').trim();
       const type = typeSel.value === 'out' ? 'out' : 'in';
       if(amt === null || amt <= 0){ amtInp.focus(); return; }
+
+      // Disable save button to prevent double-tap
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
       const now = Date.now();
-      const obj = { amount: amt, note, date: nowStr(now), updatedAt: now, type };
 
       try{
         if(editingItem){
-          // Delete old entry if type changed
+          // Preserve original date; only update updatedAt for ordering
+          const oldList = editingItem.type === 'in' ? entriesIn : entriesOut;
+          const oldEntry = oldList.find(x => String(x.id) === String(editingItem.id));
+          const originalDate = oldEntry ? oldEntry.date : nowStr(now);
+
+          const obj = { amount: amt, note, date: originalDate, updatedAt: now, type };
+
           if(editingItem.type !== type){
-            await userCol(editingItem.type).doc(String(editingItem.id)).delete();
-            await userCol(type).add(obj);
+            // Type changed: use batch to delete old + add new atomically
+            const batch = db.batch();
+            const oldRef = userCol(editingItem.type).doc(String(editingItem.id));
+            const newRef = userCol(type).doc(); // new auto-id
+            batch.delete(oldRef);
+            batch.set(newRef, obj);
+            await batch.commit();
           } else {
+            // Same type: update in place using same doc ID
             await userCol(type).doc(String(editingItem.id)).set(obj);
           }
         } else {
+          const obj = { amount: amt, note, date: nowStr(now), updatedAt: now, type };
           await userCol(type).add(obj);
         }
         syncStatusEl.textContent = '🟢 Saved';
+        syncStatusEl.style.color = 'var(--green)';
       }catch(err){
         console.error('saveEntry Firestore error', err);
-        // Fallback: local save
+        // Offline fallback: update local cache only
         if(editingItem){
+          const oldList = editingItem.type === 'in' ? entriesIn : entriesOut;
+          const oldEntry = oldList.find(x => String(x.id) === String(editingItem.id));
+          const originalDate = oldEntry ? oldEntry.date : nowStr(now);
+          const localObj = { amount: amt, note, date: originalDate, updatedAt: now, type, id: editingItem.id };
           if(editingItem.type==='in') entriesIn = entriesIn.filter(x=>String(x.id)!==String(editingItem.id));
           else entriesOut = entriesOut.filter(x=>String(x.id)!==String(editingItem.id));
-          const localObj = { ...obj, id: editingItem.id };
           if(type==='in') entriesIn.unshift(localObj); else entriesOut.unshift(localObj);
         } else {
-          const localObj = { ...obj, id: now };
+          const localObj = { amount: amt, note, date: nowStr(now), updatedAt: now, type, id: String(now) };
           if(type==='in') entriesIn.unshift(localObj); else entriesOut.unshift(localObj);
         }
         persistLocal();
         renderAll();
         syncStatusEl.textContent = '🔴 Offline (saved local)';
+        syncStatusEl.style.color = 'var(--red)';
       }
+
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
       closeModal();
     }
 
