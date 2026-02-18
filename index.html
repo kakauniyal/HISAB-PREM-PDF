@@ -37,6 +37,11 @@
     .ratio .out{height:100%;background:linear-gradient(90deg,var(--red),#ff7b7b);position:absolute;right:0;top:0;width:50%}
     .summary{display:flex;gap:10px;margin-top:12px}
     .summary .box{flex:1;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:700}
+    .summary .box.box-in{background:rgba(36,194,139,0.12);border:1px solid rgba(36,194,139,0.3);color:var(--green)}
+    .summary .box.box-out{background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.3);color:var(--red)}
+    .summary .box.box-bal{background:rgba(30,107,240,0.12);border:1px solid rgba(30,107,240,0.3);color:#7eb8ff}
+    .summary .box .label{font-size:12px;font-weight:600;opacity:0.75;margin-bottom:4px}
+    .summary .box .val{font-size:18px;margin-top:4px;font-weight:800}
     .chartWrap{margin-top:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.03))}
     #chartSmall{width:100%;height:100%;display:block; max-width:300px; max-height:300px; margin:0 auto;}
     .midControls{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
@@ -138,9 +143,9 @@
         </div>
 
         <div class="summary" style="margin-top:12px">
-          <div class="box">Cash In<br/><div id="sumIn" style="font-size:18px;margin-top:6px">₹0</div></div>
-          <div class="box">Cash Out<br/><div id="sumOut" style="font-size:18px;margin-top:6px">₹0</div></div>
-          <div class="box">Balance<br/><div id="sumBal" style="font-size:18px;margin-top:6px">₹0</div></div>
+          <div class="box box-in"><div class="label">Cash In</div><div id="sumIn" class="val">₹0</div></div>
+          <div class="box box-out"><div class="label">Cash Out</div><div id="sumOut" class="val">₹0</div></div>
+          <div class="box box-bal"><div class="label">Balance</div><div id="sumBal" class="val">₹0</div></div>
         </div>
 
         <div class="chartWrap">
@@ -176,7 +181,7 @@
         <option value="in">Cash In</option>
         <option value="out">Cash Out</option>
       </select>
-      <input id="amtInp" class="input" type="text" placeholder="Amount (₹)" />
+      <input id="amtInp" class="input" type="text" inputmode="decimal" placeholder="Amount (₹)" />
       <input id="noteInp" class="input" type="text" placeholder="Note (optional)" />
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
         <button id="saveBtn" class="input"
@@ -212,7 +217,15 @@
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    // Enable Firestore offline persistence
     const db = firebase.firestore();
+    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+      if(err.code === 'failed-precondition'){
+        console.warn('Firestore persistence unavailable (multiple tabs)');
+      } else if(err.code === 'unimplemented'){
+        console.warn('Firestore persistence not supported in this browser');
+      }
+    });
     const provider = new firebase.auth.GoogleAuthProvider();
 
     /* --- State --- */
@@ -288,25 +301,43 @@
       if(unsubscribeIn) unsubscribeIn();
       if(unsubscribeOut) unsubscribeOut();
 
-      syncStatusEl.textContent = 'Syncing...';
+      syncStatusEl.textContent = '🔄 Syncing...';
+      syncStatusEl.style.color = 'var(--muted)';
+
+      let inReady = false, outReady = false;
+
+      function updateSyncUI(fromCache){
+        if(fromCache){
+          syncStatusEl.textContent = '🔴 Offline';
+          syncStatusEl.style.color = 'var(--red)';
+        } else {
+          syncStatusEl.textContent = '🟢 Synced';
+          syncStatusEl.style.color = 'var(--green)';
+        }
+      }
 
       unsubscribeIn = userCol('in')
         .orderBy('updatedAt','desc')
-        .onSnapshot(snap => {
+        .onSnapshot({ includeMetadataChanges: true }, snap => {
           entriesIn = snap.docs.map(d => ({ ...d.data(), id: d.id }));
           persistLocal();
+          inReady = true;
+          if(outReady) updateSyncUI(snap.metadata.fromCache);
           renderAll();
-          syncStatusEl.textContent = '🟢 Synced';
         }, err => {
           console.warn('Firestore in error', err);
           syncStatusEl.textContent = '🔴 Offline';
+          syncStatusEl.style.color = 'var(--red)';
+          loadLocal(); renderAll();
         });
 
       unsubscribeOut = userCol('out')
         .orderBy('updatedAt','desc')
-        .onSnapshot(snap => {
+        .onSnapshot({ includeMetadataChanges: true }, snap => {
           entriesOut = snap.docs.map(d => ({ ...d.data(), id: d.id }));
           persistLocal();
+          outReady = true;
+          if(inReady) updateSyncUI(snap.metadata.fromCache);
           renderAll();
         }, err => {
           console.warn('Firestore out error', err);
@@ -467,12 +498,26 @@
     }
 
     /* --- Calculator logic for amount field --- */
+    amtInp.addEventListener("keydown", (e) => {
+      // Allow: backspace, delete, tab, escape, enter, arrows, home, end
+      const allowed = ['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
+      if(allowed.includes(e.key)) return;
+      // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+      if((e.ctrlKey||e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+      // Allow: 0-9, +, -, *, /, ., (, ), space
+      if(!/^[0-9+\-*\/.()\s]$/.test(e.key)){
+        e.preventDefault();
+      }
+    });
     amtInp.addEventListener("input", (e) => {
-      const val = e.target.value;
+      // Strip any non-allowed characters that may have been pasted
+      const cleaned = e.target.value.replace(/[^0-9+\-*\/.()\s]/g, '');
+      if(cleaned !== e.target.value) e.target.value = cleaned;
+      const val = cleaned;
       try {
         if (/^[0-9+\-*/.() ]+$/.test(val)) {
           const calc = Function("return " + val)();
-          if (!isNaN(calc)) e.target.setAttribute("data-result", calc);
+          if (!isNaN(calc) && isFinite(calc)) e.target.setAttribute("data-result", calc);
           else e.target.removeAttribute("data-result");
         } else {
           e.target.removeAttribute("data-result");
@@ -696,8 +741,15 @@
     document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
     if(exportBtn) exportBtn.addEventListener('click', exportPDF);
 
-    window.addEventListener('online', ()=>{ syncStatusEl.textContent='🟢 Online'; if(currentUser) subscribeFirestore(); });
-    window.addEventListener('offline', ()=>{ syncStatusEl.textContent='🔴 Offline'; });
+    window.addEventListener('online', ()=>{ 
+      syncStatusEl.textContent='🔄 Reconnecting...'; 
+      syncStatusEl.style.color='var(--muted)';
+      if(currentUser) subscribeFirestore(); 
+    });
+    window.addEventListener('offline', ()=>{ 
+      syncStatusEl.textContent='🔴 Offline'; 
+      syncStatusEl.style.color='var(--red)';
+    });
 
   </script>
 </body>
