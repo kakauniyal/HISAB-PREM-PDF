@@ -729,14 +729,49 @@
     }
 
     /* --- Auth Actions --- */
+    // Detect WebView (APK)
+    const isWebView = /wv|WebView/.test(navigator.userAgent) || 
+                      ((/Android/.test(navigator.userAgent)) && !/Chrome\/[0-9]/.test(navigator.userAgent)) ||
+                      window.Android !== undefined;
+
     qs('#googleLoginBtn').addEventListener('click', ()=>{
       const errEl = qs('#loginError');
       errEl.style.display='none';
-      auth.signInWithPopup(provider).catch(err=>{
-        errEl.textContent = 'Login failed: ' + err.message;
-        errEl.style.display='block';
-        console.error('Login error', err);
-      });
+      qs('#googleLoginBtn').textContent = 'Signing in...';
+      qs('#googleLoginBtn').disabled = true;
+
+      if(isWebView){
+        // WebView/APK: use redirect (popup blocked by Google in WebView)
+        auth.signInWithRedirect(provider).catch(err=>{
+          errEl.textContent = 'Login failed: ' + err.message;
+          errEl.style.display='block';
+          qs('#googleLoginBtn').innerHTML = `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.9 29.5 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.7-.2-3.3-.9-4.9z"/><path fill="#FF3D00" d="M6.3 15.2l6.6 4.8C14.7 16.2 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 7.4 29.5 5 24 5 16.3 5 9.6 9.2 6.3 15.2z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.1 36.5 26.6 37.5 24 37.5c-5.2 0-9.6-3.4-11.2-8H6.4C9.7 39.1 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.2C41.2 35.6 44.5 31 44.5 25c0-1.7-.3-3.3-.9-4.9z"/></svg> Sign in with Google`;
+          qs('#googleLoginBtn').disabled = false;
+          console.error('Login error', err);
+        });
+      } else {
+        // Browser: use popup (faster UX)
+        auth.signInWithPopup(provider).catch(err=>{
+          errEl.textContent = 'Login failed: ' + err.message;
+          errEl.style.display='block';
+          qs('#googleLoginBtn').innerHTML = `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.9 29.5 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.7-.2-3.3-.9-4.9z"/><path fill="#FF3D00" d="M6.3 15.2l6.6 4.8C14.7 16.2 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 7.4 29.5 5 24 5 16.3 5 9.6 9.2 6.3 15.2z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.1 36.5 26.6 37.5 24 37.5c-5.2 0-9.6-3.4-11.2-8H6.4C9.7 39.1 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.2C41.2 35.6 44.5 31 44.5 25c0-1.7-.3-3.3-.9-4.9z"/></svg> Sign in with Google`;
+          qs('#googleLoginBtn').disabled = false;
+          console.error('Login error', err);
+        });
+      }
+    });
+
+    // Handle redirect result when app loads (for WebView after redirect)
+    auth.getRedirectResult().then(result => {
+      if(result && result.user){
+        console.log('Redirect login success:', result.user.displayName);
+      }
+    }).catch(err => {
+      if(err.code !== 'auth/no-auth-event'){
+        console.error('Redirect result error', err);
+        const errEl = qs('#loginError');
+        if(errEl){ errEl.textContent = 'Login failed: ' + err.message; errEl.style.display='block'; }
+      }
     });
 
     window.handleLogout = function(){
