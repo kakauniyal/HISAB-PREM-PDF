@@ -2,10 +2,19 @@
 <html lang="hi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>HISAB PREM</title>
 
-  <!-- Firebase SDKs -->
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#1e6bf0" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="HisabPrem" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -19,205 +28,156 @@
       --bg:#071117; --accent:#1e6bf0; --green:#24c28b; --red:#ff6b6b; --muted:#98a2a6; --text:#eaf2f5;
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#041018);color:var(--text);-webkit-font-smoothing:antialiased}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#041018);color:var(--text);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 
-    /* ── LOGIN SCREEN ── */
+    /* ── LOGIN ── */
     #loginScreen{display:none;position:fixed;inset:0;background:linear-gradient(180deg,#071117,#041018);z-index:500;align-items:center;justify-content:center}
     #loginScreen.show{display:flex}
-    .loginCard{background:linear-gradient(180deg,#0b1c24,#0a1820);border-radius:20px;padding:36px 28px;text-align:center;box-shadow:0 28px 80px rgba(0,0,0,0.7);width:92%;max-width:380px}
-    .logo-big{font-size:32px;font-weight:800;color:#eaf2f5;letter-spacing:2px;margin-bottom:4px}
-    .logo-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+    .loginCard{background:linear-gradient(180deg,#0b1c24,#0a1820);border-radius:20px;padding:40px 28px;text-align:center;box-shadow:0 28px 80px rgba(0,0,0,0.7);width:92%;max-width:380px}
+    .logo-big{font-size:34px;font-weight:800;color:#eaf2f5;letter-spacing:2px}
+    .logo-sub{font-size:13px;color:var(--muted);margin:8px 0 32px}
+    #googleLoginBtn{display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#333;border:none;border-radius:10px;padding:14px 20px;font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:opacity 0.2s;box-shadow:0 4px 14px rgba(0,0,0,0.3)}
+    #googleLoginBtn:active{opacity:0.85}
+    #googleLoginBtn svg{width:22px;height:22px;flex-shrink:0}
+    .loginErr{color:var(--red);font-size:12px;margin-top:12px;min-height:16px}
 
-    /* Steps */
-    .step{display:none}
-    .step.active{display:block}
-
-    .inp{width:100%;padding:14px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:var(--text);font-size:18px;font-weight:600;margin-top:10px;outline:none;transition:border 0.2s}
-    .inp:focus{border-color:var(--accent)}
-    .inp::placeholder{color:var(--muted);font-weight:400;font-size:15px}
-
-    .btn{width:100%;padding:14px;border-radius:10px;border:none;font-size:16px;font-weight:700;cursor:pointer;margin-top:14px;transition:opacity 0.2s}
-    .btn:active{opacity:0.85}
-    .btn-primary{background:linear-gradient(135deg,var(--accent),#1e88e5);color:#fff}
-    .btn-green{background:linear-gradient(135deg,var(--green),#13a76b);color:#042216}
-    .btn-link{background:transparent;color:var(--muted);font-size:13px;margin-top:6px;padding:8px}
-
-    .err{color:var(--red);font-size:12px;margin-top:10px;min-height:18px}
-    .info{color:var(--muted);font-size:13px;margin-top:8px}
-
-    /* reCAPTCHA container */
-    #recaptcha-container{margin-top:14px;display:flex;justify-content:center}
-
-    /* Phone flag+input row */
-    .phoneRow{display:flex;gap:8px;margin-top:10px}
-    .countryCode{width:80px;padding:14px 10px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:var(--text);font-size:16px;font-weight:700;text-align:center}
-    .phoneInp{flex:1;padding:14px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:var(--text);font-size:18px;font-weight:600;outline:none;transition:border 0.2s}
-    .phoneInp:focus{border-color:var(--accent)}
-    .phoneInp::placeholder{color:var(--muted);font-weight:400;font-size:15px}
-
-    /* OTP boxes */
-    .otpRow{display:flex;gap:10px;justify-content:center;margin-top:14px}
-    .otpBox{width:44px;height:52px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:var(--text);font-size:22px;font-weight:700;text-align:center;outline:none;transition:border 0.2s}
-    .otpBox:focus{border-color:var(--accent)}
-
-    /* Timer */
-    .timer{font-size:13px;color:var(--muted);margin-top:10px}
-    .timer span{color:var(--green);font-weight:700}
+    /* Install banner */
+    #installBanner{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),#1e88e5);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:700;z-index:400;box-shadow:0 8px 24px rgba(0,0,0,0.4);cursor:pointer;white-space:nowrap;gap:10px;align-items:center}
+    #installBanner.show{display:flex}
 
     /* ── APPBAR ── */
-    .appbar{display:none;align-items:center;padding:12px 16px;background:linear-gradient(90deg,var(--accent),#1e88e5);box-shadow:0 6px 20px rgba(0,0,0,0.45)}
+    .appbar{display:none;align-items:center;padding:12px 14px;background:linear-gradient(90deg,var(--accent),#1e88e5);box-shadow:0 6px 20px rgba(0,0,0,0.45);position:sticky;top:0;z-index:100}
     .appbar.show{display:flex}
-    .logo svg{width:40px;height:40px}
-    .title{font-weight:700;font-size:17px;margin-left:8px}
+    .logo svg{width:38px;height:38px}
+    .appTitle{font-weight:700;font-size:16px;margin-left:8px;line-height:1.2}
+    .appSub{font-size:10px;opacity:0.85}
     .appTime{font-weight:600;font-size:13px;color:rgba(255,255,255,0.95);margin-left:auto}
-    .userProfile{display:flex;align-items:center;gap:8px;margin-left:12px}
-    .userName{font-size:12px;font-weight:600;color:rgba(255,255,255,0.9)}
-    .logoutBtn{background:none;border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:#fff;cursor:pointer;font-size:11px;padding:4px 8px;font-weight:600}
+    .userProfile{display:flex;align-items:center;gap:6px;margin-left:10px}
+    .userImg{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.5)}
+    .userName{font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .logoutBtn{background:none;border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:#fff;cursor:pointer;font-size:10px;padding:3px 7px;font-weight:600}
 
-    /* ── MAIN APP ── */
+    /* ── MAIN ── */
     #appMain{display:none}
     #appMain.show{display:block}
-    .container{max-width:980px;margin:14px auto;padding:0 14px}
+    .container{max-width:980px;margin:12px auto;padding:0 12px}
     .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.03));border-radius:12px;padding:14px;box-shadow:0 10px 36px rgba(0,0,0,0.5)}
-    .balanceTitle{font-size:13px;color:#cfeee4}
-    .balanceAmt{font-weight:800;font-size:28px;margin-top:6px}
+    .balRow{display:flex;justify-content:space-between;align-items:flex-start}
+    .balTitle{font-size:12px;color:#cfeee4}
+    .balAmt{font-weight:800;font-size:26px;margin-top:4px}
     .ratio{height:10px;background:#081217;border-radius:999px;margin-top:10px;position:relative;overflow:hidden}
-    .ratio .ri{height:100%;background:linear-gradient(90deg,var(--green),#16a06f)}
-    .ratio .ro{height:100%;background:linear-gradient(90deg,var(--red),#ff7b7b);position:absolute;right:0;top:0}
-
+    .ri{height:100%;background:linear-gradient(90deg,var(--green),#16a06f)}
+    .ro{height:100%;background:linear-gradient(90deg,var(--red),#ff7b7b);position:absolute;right:0;top:0}
     .summary{display:flex;gap:8px;margin-top:12px}
     .box{flex:1;padding:10px;border-radius:8px;font-weight:700}
     .box-in{background:rgba(36,194,139,0.12);border:1px solid rgba(36,194,139,0.3);color:var(--green)}
     .box-out{background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.3);color:var(--red)}
     .box-bal{background:rgba(30,107,240,0.12);border:1px solid rgba(30,107,240,0.3);color:#7eb8ff}
-    .box .lbl{font-size:11px;font-weight:600;opacity:0.75}
-    .box .val{font-size:17px;font-weight:800;margin-top:4px}
-
-    .chartWrap{margin-top:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.01);text-align:center}
-    #chartSmall{max-width:200px;max-height:200px;margin:0 auto;display:block}
-
+    .lbl{font-size:11px;font-weight:600;opacity:0.75}
+    .val{font-size:16px;font-weight:800;margin-top:3px}
+    .chartWrap{margin-top:12px;padding:8px;border-radius:10px;background:rgba(255,255,255,0.01);text-align:center}
+    #chartSmall{max-width:180px;max-height:180px;margin:0 auto;display:block}
     .midControls{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
-    .smallBtn{padding:8px 14px;border-radius:999px;border:none;font-weight:700;cursor:pointer;font-size:14px}
+    .smallBtn{padding:8px 14px;border-radius:999px;border:none;font-weight:700;cursor:pointer;font-size:13px}
     .smallBtn.in{background:linear-gradient(90deg,var(--green),#12a76a);color:#042216}
     .smallBtn.out{background:linear-gradient(90deg,var(--red),#ef6b6b);color:#2b0f0f}
     .syncStatus{font-size:12px;font-weight:700;margin-left:auto}
-    .exportBtn{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:var(--text);font-weight:700;cursor:pointer;font-size:13px}
-
-    .list{margin-top:12px;display:flex;flex-direction:column;gap:10px;padding-bottom:100px}
-    .tile{display:flex;justify-content:space-between;align-items:flex-start;padding:14px;border-radius:10px;background:linear-gradient(180deg,#071116,#071216);box-shadow:0 6px 18px rgba(0,0,0,0.5);border-left:6px solid transparent}
+    .exportBtn{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:var(--text);font-weight:700;cursor:pointer;font-size:12px}
+    .secTitle{margin:16px 0 6px;font-size:15px;font-weight:700}
+    .list{display:flex;flex-direction:column;gap:10px;padding-bottom:90px}
+    .tile{display:flex;justify-content:space-between;align-items:flex-start;padding:13px;border-radius:10px;background:linear-gradient(180deg,#071116,#071216);box-shadow:0 6px 18px rgba(0,0,0,0.5);border-left:6px solid transparent}
     .tile.in{border-left-color:var(--green)}
     .tile.out{border-left-color:var(--red)}
-    .tileLeft{flex:1;padding-right:10px}
-    .tileAmt{font-weight:800;font-size:20px}
-    .tileNote{margin-top:5px;font-size:14px;font-weight:600;white-space:pre-wrap}
-    .tileMeta{font-size:12px;color:var(--muted);margin-top:6px}
-    .tileActions{display:flex;flex-direction:column;gap:8px}
-    .iconBtn{width:38px;height:38px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
-    .iconBtn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.6}
-
-    .fab{position:fixed;right:16px;bottom:18px;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,var(--green),#13a76b);display:flex;align-items:center;justify-content:center;color:#042216;font-size:30px;box-shadow:0 16px 40px rgba(15,50,30,0.4);border:3px solid rgba(255,255,255,0.05);cursor:pointer;z-index:200;display:none}
+    .tL{flex:1;padding-right:10px}
+    .tAmt{font-weight:800;font-size:19px}
+    .tNote{margin-top:4px;font-size:13px;font-weight:600;white-space:pre-wrap;word-break:break-word}
+    .tMeta{font-size:11px;color:var(--muted);margin-top:5px}
+    .tAct{display:flex;flex-direction:column;gap:8px}
+    .iconBtn{width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
+    .iconBtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6}
+    .fab{position:fixed;right:14px;bottom:16px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--green),#13a76b);display:none;align-items:center;justify-content:center;color:#042216;font-size:28px;box-shadow:0 14px 36px rgba(15,50,30,0.4);border:3px solid rgba(255,255,255,0.05);cursor:pointer;z-index:200}
     .fab.show{display:flex}
-
     .modal{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);z-index:300}
     .modal.open{display:flex}
-    .modalCard{width:92%;max-width:500px;background:linear-gradient(180deg,#071417,#07181a);border-radius:14px;padding:18px;box-shadow:0 28px 80px rgba(0,0,0,0.7)}
-    .minput{width:100%;padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:inherit;margin-top:8px;font-size:18px;font-weight:600;outline:none}
+    .modalCard{width:92%;max-width:480px;background:linear-gradient(180deg,#071417,#07181a);border-radius:14px;padding:18px;box-shadow:0 28px 80px rgba(0,0,0,0.7)}
+    .minput{width:100%;padding:13px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:inherit;margin-top:8px;font-size:17px;font-weight:600;outline:none}
     .hidden{display:none!important}
-    .sectionTitle{margin-top:18px;font-size:16px;font-weight:700}
+    .emptyMsg{color:var(--muted);padding:12px;font-size:14px}
   </style>
 </head>
 <body>
 
-<!-- ══ LOGIN SCREEN ══ -->
+<!-- LOGIN -->
 <div id="loginScreen" class="show">
   <div class="loginCard">
     <div class="logo-big">HISAB PREM</div>
-    <div class="logo-sub">Phone se login karein — data safe rahega ☁️</div>
-
-    <!-- Step 1: Phone number -->
-    <div class="step active" id="step1">
-      <div style="font-size:14px;color:var(--muted);text-align:left;margin-bottom:4px">Mobile Number</div>
-      <div class="phoneRow">
-        <input class="countryCode" id="countryCode" type="text" value="+91" maxlength="4" />
-        <input class="phoneInp" id="phoneInp" type="tel" placeholder="10-digit number" maxlength="10" inputmode="numeric" />
-      </div>
-      <div id="recaptcha-container"></div>
-      <button class="btn btn-primary" id="sendOtpBtn">OTP Bhejo 📲</button>
-      <div class="err" id="phoneErr"></div>
-    </div>
-
-    <!-- Step 2: OTP -->
-    <div class="step" id="step2">
-      <div style="font-size:14px;color:var(--muted);margin-bottom:4px">OTP Enter Karein</div>
-      <div style="font-size:13px;color:var(--green);margin-bottom:4px" id="otpSentTo"></div>
-      <div class="otpRow">
-        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
-        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
-        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
-        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
-        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
-        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
-      </div>
-      <button class="btn btn-green" id="verifyOtpBtn">Verify & Login ✅</button>
-      <div class="timer" id="timerEl">Resend in <span id="timerCount">60</span>s</div>
-      <button class="btn btn-link hidden" id="resendBtn">🔄 OTP Dobara Bhejo</button>
-      <button class="btn btn-link" id="backBtn">← Wapas Jaao</button>
-      <div class="err" id="otpErr"></div>
-    </div>
-
+    <div class="logo-sub">Apna hisab rakho — data safe rahega ☁️</div>
+    <button id="googleLoginBtn">
+      <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.9 29.5 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.7-.2-3.3-.9-4.9z"/><path fill="#FF3D00" d="M6.3 15.2l6.6 4.8C14.7 16.2 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 7.4 29.5 5 24 5 16.3 5 9.6 9.2 6.3 15.2z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.1 36.5 26.6 37.5 24 37.5c-5.2 0-9.6-3.4-11.2-8H6.4C9.7 39.1 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.2C41.2 35.6 44.5 31 44.5 25c0-1.7-.3-3.3-.9-4.9z"/></svg>
+      Google se Login karein
+    </button>
+    <div class="loginErr" id="loginErr"></div>
   </div>
 </div>
 
-<!-- ══ APP BAR ══ -->
+<!-- INSTALL BANNER -->
+<div id="installBanner">
+  📲 Home Screen pe add karein
+  <button onclick="installPWA()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px">Install</button>
+  <button onclick="document.getElementById('installBanner').classList.remove('show')" style="background:none;border:none;color:rgba(255,255,255,0.7);cursor:pointer;font-size:16px;padding:0 4px">✕</button>
+</div>
+
+<!-- APPBAR -->
 <div class="appbar" id="appbar">
   <div class="logo">
-    <svg viewBox="0 0 140 60" xmlns="http://www.w3.org/2000/svg"><g transform="translate(6,6)"><text x="0" y="16" font-family="Inter,Arial" font-size="14" font-weight="700" fill="#fff">HISAB</text><text x="0" y="36" font-family="Inter,Arial" font-size="14" font-weight="700" fill="#fff">PREM</text></g></svg>
+    <svg viewBox="0 0 140 60"><g transform="translate(6,6)"><text x="0" y="16" font-family="Inter,Arial" font-size="14" font-weight="700" fill="#fff">HISAB</text><text x="0" y="36" font-family="Inter,Arial" font-size="14" font-weight="700" fill="#fff">PREM</text></g></svg>
   </div>
-  <span class="title">HISAB PREM</span>
+  <div style="margin-left:8px">
+    <div class="appTitle">HISAB PREM</div>
+    <div class="appSub">Cloud Sync ☁️</div>
+  </div>
   <span class="appTime" id="appTime">--:--</span>
   <div class="userProfile">
+    <img class="userImg" id="userImg" src="" alt="" style="display:none" referrerpolicy="no-referrer"/>
     <span class="userName" id="userName"></span>
     <button class="logoutBtn" onclick="handleLogout()">Logout</button>
   </div>
 </div>
 
-<!-- ══ MAIN APP ══ -->
+<!-- MAIN APP -->
 <div id="appMain">
   <div class="container">
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div class="balRow">
         <div>
-          <div class="balanceTitle">Current Balance</div>
-          <div class="balanceAmt" id="balanceAmt">₹0</div>
+          <div class="balTitle">Current Balance</div>
+          <div class="balAmt" id="balanceAmt">₹0</div>
           <div class="ratio"><div class="ri" id="ratioIn" style="width:50%"></div><div class="ro" id="ratioOut" style="width:50%"></div></div>
         </div>
-        <div style="text-align:right;font-size:11px;color:var(--muted)" id="collectionInfo">Loading...</div>
+        <div style="text-align:right;font-size:11px;color:var(--muted);max-width:140px;word-break:break-all" id="collectionInfo"></div>
       </div>
-
       <div class="summary">
         <div class="box box-in"><div class="lbl">Cash In</div><div class="val" id="sumIn">₹0</div></div>
         <div class="box box-out"><div class="lbl">Cash Out</div><div class="val" id="sumOut">₹0</div></div>
         <div class="box box-bal"><div class="lbl">Balance</div><div class="val" id="sumBal">₹0</div></div>
       </div>
-
       <div class="chartWrap">
         <canvas id="chartSmall" width="150" height="150"></canvas>
       </div>
-
       <div class="midControls">
         <button class="smallBtn in" id="btnQuickIn">Cash In</button>
         <button class="smallBtn out" id="btnQuickOut">Cash Out</button>
-        <div class="syncStatus" id="syncStatus">🔄</div>
+        <span class="syncStatus" id="syncStatus">🔄</span>
         <button class="exportBtn" id="exportBtn">📄 Export</button>
       </div>
     </div>
 
     <div id="page-in">
-      <div class="sectionTitle">Recent Cash In</div>
+      <div class="secTitle">Recent Cash In</div>
       <div id="listIn" class="list"></div>
     </div>
     <div id="page-out" class="hidden">
-      <div class="sectionTitle">Recent Cash Out</div>
+      <div class="secTitle">Recent Cash Out</div>
       <div id="listOut" class="list"></div>
     </div>
   </div>
@@ -225,10 +185,10 @@
 
 <button class="fab" id="fabAdd">+</button>
 
-<!-- Add/Edit Modal -->
+<!-- Modal -->
 <div class="modal" id="modalAdd">
   <div class="modalCard">
-    <h3 id="modalTitle" style="margin:0 0 4px">Add Entry</h3>
+    <h3 id="modalTitle" style="margin:0 0 6px">Add Entry</h3>
     <select id="typeSel" class="minput">
       <option value="in">Cash In</option>
       <option value="out">Cash Out</option>
@@ -245,113 +205,81 @@
 <div id="printArea" style="display:none"></div>
 
 <script>
-/* ══════════════════════════════
-   HISAB PREM — Phone OTP Login
-   Works in WebView + Browser
-══════════════════════════════ */
-
-/* ── Firebase Init ── */
-const firebaseConfig = {
-  apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
-  authDomain: "hisabprem.firebaseapp.com",
-  projectId: "hisabprem",
-  storageBucket: "hisabprem.firebasestorage.app",
-  messagingSenderId: "299571413492",
-  appId: "1:299571413492:web:de65e2a8d3544060fcb9a1"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
+/* ══ Firebase Init ══ */
+firebase.initializeApp({
+  apiKey:"AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
+  authDomain:"hisabprem.firebaseapp.com",
+  projectId:"hisabprem",
+  storageBucket:"hisabprem.firebasestorage.app",
+  messagingSenderId:"299571413492",
+  appId:"1:299571413492:web:de65e2a8d3544060fcb9a1"
+});
+const auth=firebase.auth();
+const db=firebase.firestore();
 db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
 
-/* ── State ── */
-let currentUser = null;
-let entriesIn = [], entriesOut = [];
-let editingItem = null;
-let unsubIn = null, unsubOut = null;
-let confirmationResult = null;
-let timerInterval = null;
+/* ══ State ══ */
+let currentUser=null, entriesIn=[], entriesOut=[], editingItem=null;
+let unsubIn=null, unsubOut=null;
+let deferredPrompt=null;
 
-const LOCAL_IN = 'hp_in', LOCAL_OUT = 'hp_out';
+const LOCAL_IN='hp_in', LOCAL_OUT='hp_out';
+const qs=s=>document.querySelector(s);
 
-/* ── Helpers ── */
-const qs = s => document.querySelector(s);
-const qsa = s => document.querySelectorAll(s);
-function nowStr(ts){ return new Date(ts||Date.now()).toLocaleString('en-IN'); }
-function safeNum(v){ const n=Number(v); return Number.isFinite(n)?n:null; }
-function fmt(n){ return Number(n).toLocaleString('en-IN'); }
-function escHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+/* ══ Helpers ══ */
+function nowStr(ts){return new Date(ts||Date.now()).toLocaleString('en-IN');}
+function safeNum(v){const n=Number(v);return Number.isFinite(n)?n:null;}
+function fmt(n){return Number(n).toLocaleString('en-IN');}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
-/* ── Local cache ── */
+/* ══ Local Cache ══ */
 function loadLocal(){
   try{
-    const a=JSON.parse(localStorage.getItem(LOCAL_IN)||'null');
-    const b=JSON.parse(localStorage.getItem(LOCAL_OUT)||'null');
-    entriesIn=Array.isArray(a)?a:[];
-    entriesOut=Array.isArray(b)?b:[];
+    entriesIn=JSON.parse(localStorage.getItem(LOCAL_IN)||'[]');
+    entriesOut=JSON.parse(localStorage.getItem(LOCAL_OUT)||'[]');
+    if(!Array.isArray(entriesIn))entriesIn=[];
+    if(!Array.isArray(entriesOut))entriesOut=[];
   }catch(e){entriesIn=[];entriesOut=[];}
 }
 function saveLocal(){
-  try{
-    localStorage.setItem(LOCAL_IN,JSON.stringify(entriesIn));
-    localStorage.setItem(LOCAL_OUT,JSON.stringify(entriesOut));
-  }catch(e){}
+  try{localStorage.setItem(LOCAL_IN,JSON.stringify(entriesIn));localStorage.setItem(LOCAL_OUT,JSON.stringify(entriesOut));}catch(e){}
 }
 
-/* ── Firestore ── */
-function userCol(type){
-  return db.collection('users').doc(currentUser.uid).collection(type==='in'?'entries_in':'entries_out');
+/* ══ Firestore ══ */
+function col(type){return db.collection('users').doc(currentUser.uid).collection(type==='in'?'entries_in':'entries_out');}
+
+function setSync(txt,color){const el=qs('#syncStatus');el.textContent=txt;el.style.color=color;}
+
+function subscribeFS(){
+  if(unsubIn)unsubIn(); if(unsubOut)unsubOut();
+  setSync('🔄','var(--muted)');
+  let inOk=false,outOk=false;
+  function ui(fromCache){setSync(fromCache?'🔴 Offline':'🟢 Synced',fromCache?'var(--red)':'var(--green)');}
+
+  unsubIn=col('in').orderBy('updatedAt','desc').onSnapshot({includeMetadataChanges:true},snap=>{
+    if(snap.metadata.hasPendingWrites)return;
+    const seen=new Set();
+    entriesIn=snap.docs.map(d=>({...d.data(),id:d.id})).filter(e=>seen.has(e.id)?false:seen.add(e.id));
+    saveLocal();inOk=true;if(outOk)ui(snap.metadata.fromCache);renderAll();
+  },()=>{setSync('🔴 Offline','var(--red)');loadLocal();renderAll();});
+
+  unsubOut=col('out').orderBy('updatedAt','desc').onSnapshot({includeMetadataChanges:true},snap=>{
+    if(snap.metadata.hasPendingWrites)return;
+    const seen=new Set();
+    entriesOut=snap.docs.map(d=>({...d.data(),id:d.id})).filter(e=>seen.has(e.id)?false:seen.add(e.id));
+    saveLocal();outOk=true;if(inOk)ui(snap.metadata.fromCache);renderAll();
+  },()=>{});
 }
 
-function subscribeFirestore(){
-  if(unsubIn) unsubIn();
-  if(unsubOut) unsubOut();
-  setSyncStatus('🔄','var(--muted)');
-
-  let inReady=false, outReady=false;
-
-  function updateUI(fromCache){
-    setSyncStatus(fromCache?'🔴 Offline':'🟢 Synced', fromCache?'var(--red)':'var(--green)');
-  }
-
-  unsubIn = userCol('in').orderBy('updatedAt','desc')
-    .onSnapshot({includeMetadataChanges:true}, snap=>{
-      if(snap.metadata.hasPendingWrites) return;
-      const seen=new Set();
-      entriesIn=snap.docs.map(d=>({...d.data(),id:d.id})).filter(e=>seen.has(e.id)?false:seen.add(e.id));
-      saveLocal(); inReady=true;
-      if(outReady) updateUI(snap.metadata.fromCache);
-      renderAll();
-    }, err=>{ setSyncStatus('🔴 Offline','var(--red)'); loadLocal(); renderAll(); });
-
-  unsubOut = userCol('out').orderBy('updatedAt','desc')
-    .onSnapshot({includeMetadataChanges:true}, snap=>{
-      if(snap.metadata.hasPendingWrites) return;
-      const seen=new Set();
-      entriesOut=snap.docs.map(d=>({...d.data(),id:d.id})).filter(e=>seen.has(e.id)?false:seen.add(e.id));
-      saveLocal(); outReady=true;
-      if(inReady) updateUI(snap.metadata.fromCache);
-      renderAll();
-    }, err=>{});
-}
-
-function setSyncStatus(txt,color){
-  const el=qs('#syncStatus');
-  el.textContent=txt;
-  el.style.color=color;
-}
-
-/* ── Render ── */
+/* ══ Render ══ */
 function tileHTML(e){
-  const cls=e.type==='out'?'out':'in';
-  return `<div class="tile ${cls}" data-id="${e.id}">
-    <div class="tileLeft">
-      <div class="tileAmt">₹${fmt(e.amount||0)}</div>
-      <div class="tileNote">${escHtml(e.note)||'&nbsp;'}</div>
-      <div class="tileMeta">${escHtml(e.date||nowStr())}</div>
+  return`<div class="tile ${e.type==='out'?'out':'in'}">
+    <div class="tL">
+      <div class="tAmt">₹${fmt(e.amount||0)}</div>
+      <div class="tNote">${esc(e.note)||'&nbsp;'}</div>
+      <div class="tMeta">${esc(e.date||nowStr())}</div>
     </div>
-    <div class="tileActions">
+    <div class="tAct">
       <button class="iconBtn" onclick="openEdit('${e.id}','${e.type}')">
         <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -361,57 +289,46 @@ function tileHTML(e){
     </div>
   </div>`;
 }
-
 function renderLists(){
-  qs('#listIn').innerHTML = entriesIn.length ? entriesIn.map(tileHTML).join('') : '<div style="color:var(--muted);padding:12px">Koi entry nahi</div>';
-  qs('#listOut').innerHTML = entriesOut.length ? entriesOut.map(tileHTML).join('') : '<div style="color:var(--muted);padding:12px">Koi entry nahi</div>';
+  qs('#listIn').innerHTML=entriesIn.length?entriesIn.map(tileHTML).join(''):'<div class="emptyMsg">Koi Cash In entry nahi</div>';
+  qs('#listOut').innerHTML=entriesOut.length?entriesOut.map(tileHTML).join(''):'<div class="emptyMsg">Koi Cash Out entry nahi</div>';
 }
-
 function renderSummary(){
-  const tIn=entriesIn.reduce((s,x)=>s+(Number(x.amount)||0),0);
-  const tOut=entriesOut.reduce((s,x)=>s+(Number(x.amount)||0),0);
-  qs('#sumIn').textContent='₹'+fmt(tIn);
-  qs('#sumOut').textContent='₹'+fmt(tOut);
-  qs('#sumBal').textContent='₹'+fmt(tIn-tOut);
-  qs('#balanceAmt').textContent='₹'+fmt(tIn-tOut);
-  const tot=(tIn+tOut)||1;
-  qs('#ratioIn').style.width=Math.round((tIn/tot)*100)+'%';
-  qs('#ratioOut').style.width=Math.round((tOut/tot)*100)+'%';
+  const tI=entriesIn.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const tO=entriesOut.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  qs('#sumIn').textContent='₹'+fmt(tI);
+  qs('#sumOut').textContent='₹'+fmt(tO);
+  qs('#sumBal').textContent='₹'+fmt(tI-tO);
+  qs('#balanceAmt').textContent='₹'+fmt(tI-tO);
+  const tot=(tI+tO)||1;
+  qs('#ratioIn').style.width=Math.round((tI/tot)*100)+'%';
+  qs('#ratioOut').style.width=Math.round((tO/tot)*100)+'%';
 }
-
 function renderChart(){
   try{
     const ctx=qs('#chartSmall').getContext('2d');
-    const tIn=entriesIn.reduce((s,x)=>s+(Number(x.amount)||0),0);
-    const tOut=entriesOut.reduce((s,x)=>s+(Number(x.amount)||0),0);
-    if(window._donut) window._donut.destroy();
-    window._donut=new Chart(ctx,{
-      type:'doughnut',
-      data:{labels:['Cash In','Cash Out'],datasets:[{data:[tIn,tOut],backgroundColor:['#24c28b','#ff6b6b']}]},
-      options:{responsive:false,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false}}}
-    });
+    const tI=entriesIn.reduce((s,x)=>s+(Number(x.amount)||0),0);
+    const tO=entriesOut.reduce((s,x)=>s+(Number(x.amount)||0),0);
+    if(window._donut)window._donut.destroy();
+    window._donut=new Chart(ctx,{type:'doughnut',data:{labels:['In','Out'],datasets:[{data:[tI,tO],backgroundColor:['#24c28b','#ff6b6b']}]},options:{responsive:false,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false}}}});
   }catch(e){}
 }
+function renderAll(){renderSummary();renderLists();renderChart();}
 
-function renderAll(){ renderSummary(); renderLists(); renderChart(); }
-
-/* ── Modal ── */
+/* ══ Modal ══ */
 function openAdd(type='in'){
   editingItem=null;
   qs('#modalTitle').textContent='Add Entry';
   qs('#typeSel').value=type;
-  qs('#amtInp').value='';
-  qs('#noteInp').value='';
+  qs('#amtInp').value='';qs('#noteInp').value='';
   qs('#amtInp').removeAttribute('data-result');
   qs('#modalAdd').classList.add('open');
   document.body.style.overflow='hidden';
   setTimeout(()=>qs('#amtInp').focus(),80);
 }
-
 function openEdit(id,type){
-  const list=type==='in'?entriesIn:entriesOut;
-  const e=list.find(x=>String(x.id)===String(id));
-  if(!e) return;
+  const e=(type==='in'?entriesIn:entriesOut).find(x=>String(x.id)===String(id));
+  if(!e)return;
   editingItem={id:e.id,type};
   qs('#modalTitle').textContent='Edit Entry';
   qs('#typeSel').value=type;
@@ -421,373 +338,195 @@ function openEdit(id,type){
   document.body.style.overflow='hidden';
   setTimeout(()=>qs('#amtInp').focus(),80);
 }
-
-function closeModal(){
-  qs('#modalAdd').classList.remove('open');
-  editingItem=null;
-  document.body.style.overflow='';
-}
+function closeModal(){qs('#modalAdd').classList.remove('open');editingItem=null;document.body.style.overflow='';}
 
 async function saveEntry(){
-  let amtVal=qs('#amtInp').value||'';
+  let av=qs('#amtInp').value||'';
   const dr=qs('#amtInp').getAttribute('data-result');
-  if(dr) amtVal=dr;
-  const amt=safeNum(amtVal);
+  if(dr)av=dr;
+  const amt=safeNum(av);
   const note=(qs('#noteInp').value||'').trim();
   const type=qs('#typeSel').value==='out'?'out':'in';
   if(!amt||amt<=0){qs('#amtInp').focus();return;}
-
-  const saveBtn=qs('#saveBtn');
-  saveBtn.disabled=true; saveBtn.textContent='Saving...';
-
+  const sb=qs('#saveBtn');sb.disabled=true;sb.textContent='Saving...';
   const now=Date.now();
   try{
     if(editingItem){
-      const oldList=editingItem.type==='in'?entriesIn:entriesOut;
-      const old=oldList.find(x=>String(x.id)===String(editingItem.id));
+      const old=(editingItem.type==='in'?entriesIn:entriesOut).find(x=>String(x.id)===String(editingItem.id));
       const obj={amount:amt,note,date:old?old.date:nowStr(now),updatedAt:now,type};
       if(editingItem.type!==type){
-        const batch=db.batch();
-        batch.delete(userCol(editingItem.type).doc(String(editingItem.id)));
-        batch.set(userCol(type).doc(),obj);
-        await batch.commit();
-      } else {
-        await userCol(type).doc(String(editingItem.id)).set(obj);
-      }
-    } else {
-      await userCol(type).add({amount:amt,note,date:nowStr(now),updatedAt:now,type});
+        const b=db.batch();
+        b.delete(col(editingItem.type).doc(String(editingItem.id)));
+        b.set(col(type).doc(),obj);await b.commit();
+      }else{await col(type).doc(String(editingItem.id)).set(obj);}
+    }else{
+      await col(type).add({amount:amt,note,date:nowStr(now),updatedAt:now,type});
     }
-    setSyncStatus('🟢 Saved','var(--green)');
+    setSync('🟢 Saved','var(--green)');
   }catch(err){
     // Offline fallback
     if(editingItem){
-      const oldList=editingItem.type==='in'?entriesIn:entriesOut;
-      const old=oldList.find(x=>String(x.id)===String(editingItem.id));
+      const old=(editingItem.type==='in'?entriesIn:entriesOut).find(x=>String(x.id)===String(editingItem.id));
       const obj={amount:amt,note,date:old?old.date:nowStr(now),updatedAt:now,type,id:editingItem.id};
-      if(editingItem.type==='in') entriesIn=entriesIn.filter(x=>String(x.id)!==String(editingItem.id));
+      if(editingItem.type==='in')entriesIn=entriesIn.filter(x=>String(x.id)!==String(editingItem.id));
       else entriesOut=entriesOut.filter(x=>String(x.id)!==String(editingItem.id));
-      if(type==='in') entriesIn.unshift(obj); else entriesOut.unshift(obj);
-    } else {
+      if(type==='in')entriesIn.unshift(obj);else entriesOut.unshift(obj);
+    }else{
       const obj={amount:amt,note,date:nowStr(now),updatedAt:now,type,id:String(now)};
-      if(type==='in') entriesIn.unshift(obj); else entriesOut.unshift(obj);
+      if(type==='in')entriesIn.unshift(obj);else entriesOut.unshift(obj);
     }
-    saveLocal(); renderAll();
-    setSyncStatus('🔴 Offline','var(--red)');
+    saveLocal();renderAll();setSync('🔴 Offline','var(--red)');
   }
-  saveBtn.disabled=false; saveBtn.textContent='Save';
+  sb.disabled=false;sb.textContent='Save';
   closeModal();
 }
 
 async function deleteEntry(id,type){
-  if(!confirm('Delete karein?')) return;
-  try{
-    await userCol(type).doc(String(id)).delete();
-    setSyncStatus('🟢 Deleted','var(--green)');
-  }catch(err){
-    if(type==='in') entriesIn=entriesIn.filter(x=>String(x.id)!==String(id));
+  if(!confirm('Delete karein?'))return;
+  try{await col(type).doc(String(id)).delete();setSync('🟢 Deleted','var(--green)');}
+  catch(e){
+    if(type==='in')entriesIn=entriesIn.filter(x=>String(x.id)!==String(id));
     else entriesOut=entriesOut.filter(x=>String(x.id)!==String(id));
-    saveLocal(); renderAll();
+    saveLocal();renderAll();
   }
 }
 
-/* ── Amount field ── */
+/* ══ Amount Field ══ */
 qs('#amtInp').addEventListener('keydown',e=>{
   const ok=['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','Home','End'];
-  if(ok.includes(e.key)) return;
-  if((e.ctrlKey||e.metaKey)&&['a','c','v','x'].includes(e.key.toLowerCase())) return;
-  if(!/^[0-9+\-*\/.()\s]$/.test(e.key)) e.preventDefault();
+  if(ok.includes(e.key))return;
+  if((e.ctrlKey||e.metaKey)&&'acvx'.includes(e.key.toLowerCase()))return;
+  if(!/^[0-9+\-*\/.()\s]$/.test(e.key))e.preventDefault();
 });
 qs('#amtInp').addEventListener('input',e=>{
-  const cleaned=e.target.value.replace(/[^0-9+\-*\/.()\s]/g,'');
-  if(cleaned!==e.target.value) e.target.value=cleaned;
-  try{
-    if(/^[0-9+\-*/.() ]+$/.test(cleaned)){
-      const r=Function('return '+cleaned)();
-      if(isFinite(r)) e.target.setAttribute('data-result',r);
-      else e.target.removeAttribute('data-result');
-    } else e.target.removeAttribute('data-result');
-  }catch{e.target.removeAttribute('data-result');}
+  const c=e.target.value.replace(/[^0-9+\-*\/.()\s]/g,'');
+  if(c!==e.target.value)e.target.value=c;
+  try{if(/^[0-9+\-*/.() ]+$/.test(c)){const r=Function('return '+c)();if(isFinite(r))e.target.setAttribute('data-result',r);else e.target.removeAttribute('data-result');}else e.target.removeAttribute('data-result');}catch{e.target.removeAttribute('data-result');}
 });
 qs('#amtInp').addEventListener('blur',e=>{
   const r=e.target.getAttribute('data-result');
-  if(r){ const n=Number(r); e.target.value=Number.isInteger(n)?String(n):String(Math.round(n*100)/100); }
+  if(r){const n=Number(r);e.target.value=Number.isInteger(n)?String(n):String(Math.round(n*100)/100);}
 });
 
-/* ── Navigate ── */
+/* ══ Navigate ══ */
 window.navigate=function(p){
-  if(p==='out'){
-    qs('#page-in').classList.add('hidden');
-    qs('#page-out').classList.remove('hidden');
-  } else {
-    qs('#page-out').classList.add('hidden');
-    qs('#page-in').classList.remove('hidden');
-  }
+  if(p==='out'){qs('#page-in').classList.add('hidden');qs('#page-out').classList.remove('hidden');}
+  else{qs('#page-out').classList.add('hidden');qs('#page-in').classList.remove('hidden');}
 };
 
-/* ── Show/Hide App ── */
+/* ══ Show/Hide App ══ */
 function showApp(user){
   currentUser=user;
   qs('#loginScreen').classList.remove('show');
   qs('#appbar').classList.add('show');
   qs('#appMain').classList.add('show');
   qs('#fabAdd').classList.add('show');
-  qs('#userName').textContent=user.phoneNumber||'User';
-  qs('#collectionInfo').textContent=user.phoneNumber||'';
-  loadLocal(); renderAll();
-  subscribeFirestore();
+  const name=user.displayName?user.displayName.split(' ')[0]:'User';
+  qs('#userName').textContent=name;
+  if(user.photoURL){qs('#userImg').src=user.photoURL;qs('#userImg').style.display='block';}
+  qs('#collectionInfo').textContent=user.email||'';
+  loadLocal();renderAll();subscribeFS();
+  // Show install banner after login if not installed
+  setTimeout(()=>{if(deferredPrompt)qs('#installBanner').classList.add('show');},3000);
 }
-
 function showLogin(){
   currentUser=null;
-  if(unsubIn){unsubIn();unsubIn=null;}
-  if(unsubOut){unsubOut();unsubOut=null;}
+  if(unsubIn){unsubIn();unsubIn=null;}if(unsubOut){unsubOut();unsubOut=null;}
   qs('#loginScreen').classList.add('show');
   qs('#appbar').classList.remove('show');
   qs('#appMain').classList.remove('show');
   qs('#fabAdd').classList.remove('show');
-  // Reset login form
-  qs('#step1').classList.add('active');
-  qs('#step2').classList.remove('active');
-  qs('#phoneInp').value='';
-  qs('#phoneErr').textContent='';
+  qs('#installBanner').classList.remove('show');
 }
+window.handleLogout=()=>auth.signOut().then(showLogin).catch(()=>{});
 
-window.handleLogout=function(){
-  auth.signOut().then(()=>showLogin()).catch(()=>{});
+/* ══ Google Login ══ */
+const provider=new firebase.auth.GoogleAuthProvider();
+qs('#googleLoginBtn').addEventListener('click',()=>{
+  qs('#loginErr').textContent='';
+  qs('#googleLoginBtn').textContent='Sign in ho raha hai...';
+  qs('#googleLoginBtn').disabled=true;
+  auth.signInWithPopup(provider).catch(err=>{
+    qs('#loginErr').textContent='Login fail: '+err.message;
+    qs('#googleLoginBtn').innerHTML=`<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.9 29.5 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.7-.2-3.3-.9-4.9z"/><path fill="#FF3D00" d="M6.3 15.2l6.6 4.8C14.7 16.2 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 7.4 29.5 5 24 5 16.3 5 9.6 9.2 6.3 15.2z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.1 36.5 26.6 37.5 24 37.5c-5.2 0-9.6-3.4-11.2-8H6.4C9.7 39.1 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.2C41.2 35.6 44.5 31 44.5 25c0-1.7-.3-3.3-.9-4.9z"/></svg>Google se Login karein`;
+    qs('#googleLoginBtn').disabled=false;
+  });
+});
+
+auth.onAuthStateChanged(u=>u?showApp(u):showLogin());
+
+/* ══ PWA Install ══ */
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+});
+window.installPWA=function(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(()=>{deferredPrompt=null;qs('#installBanner').classList.remove('show');});
 };
-
-/* ── OTP Boxes auto-focus ── */
-const otpBoxes=qsa('.otpBox');
-otpBoxes.forEach((box,i)=>{
-  box.addEventListener('input',e=>{
-    // Only numbers
-    e.target.value=e.target.value.replace(/\D/g,'');
-    if(e.target.value && i<otpBoxes.length-1) otpBoxes[i+1].focus();
-  });
-  box.addEventListener('keydown',e=>{
-    if(e.key==='Backspace'&&!e.target.value&&i>0) otpBoxes[i-1].focus();
-  });
-  box.addEventListener('paste',e=>{
-    e.preventDefault();
-    const text=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'');
-    text.split('').forEach((ch,j)=>{ if(otpBoxes[i+j]) otpBoxes[i+j].value=ch; });
-    const next=Math.min(i+text.length,otpBoxes.length-1);
-    otpBoxes[next].focus();
-  });
+window.addEventListener('appinstalled',()=>{
+  deferredPrompt=null;qs('#installBanner').classList.remove('show');
 });
 
-function getOTP(){
-  return Array.from(otpBoxes).map(b=>b.value).join('');
-}
-function clearOTP(){
-  otpBoxes.forEach(b=>b.value='');
-  otpBoxes[0].focus();
-}
-
-/* ── Timer ── */
-function startTimer(sec=60){
-  clearInterval(timerInterval);
-  qs('#timerEl').classList.remove('hidden');
-  qs('#resendBtn').classList.add('hidden');
-  qs('#timerCount').textContent=sec;
-  timerInterval=setInterval(()=>{
-    sec--;
-    qs('#timerCount').textContent=sec;
-    if(sec<=0){
-      clearInterval(timerInterval);
-      qs('#timerEl').classList.add('hidden');
-      qs('#resendBtn').classList.remove('hidden');
-    }
-  },1000);
-}
-
-/* ── reCAPTCHA (invisible) ── */
-function setupRecaptcha(){
-  if(window.recaptchaVerifier){
-    try{ window.recaptchaVerifier.clear(); }catch(e){}
-  }
-  qs('#recaptcha-container').innerHTML='';
-  window.recaptchaVerifier=new firebase.auth.RecaptchaVerifier('recaptcha-container',{
-    size:'invisible',
-    callback:()=>{}
+/* ══ Service Worker ══ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').then(r=>console.log('SW registered')).catch(e=>console.warn('SW error',e));
   });
 }
 
-/* ── Send OTP ── */
-qs('#sendOtpBtn').addEventListener('click',async()=>{
-  const phone=qs('#phoneInp').value.trim().replace(/\D/g,'');
-  const code=qs('#countryCode').value.trim()||'+91';
-  const errEl=qs('#phoneErr');
-  errEl.textContent='';
-
-  if(phone.length!==10){ errEl.textContent='Sahi 10-digit number daalo'; return; }
-
-  const fullPhone=code+phone;
-  qs('#sendOtpBtn').disabled=true;
-  qs('#sendOtpBtn').textContent='Bhej raha hoon...';
-
-  try{
-    setupRecaptcha();
-    confirmationResult=await auth.signInWithPhoneNumber(fullPhone,window.recaptchaVerifier);
-    // Show step 2
-    qs('#step1').classList.remove('active');
-    qs('#step2').classList.add('active');
-    qs('#otpSentTo').textContent='OTP bheja: '+fullPhone;
-    startTimer(60);
-    clearOTP();
-  }catch(err){
-    console.error('OTP send error',err);
-    errEl.textContent=getFirebaseErrMsg(err);
-    setupRecaptcha(); // reset
-  }
-  qs('#sendOtpBtn').disabled=false;
-  qs('#sendOtpBtn').textContent='OTP Bhejo 📲';
-});
-
-/* ── Verify OTP ── */
-qs('#verifyOtpBtn').addEventListener('click',async()=>{
-  const otp=getOTP();
-  const errEl=qs('#otpErr');
-  errEl.textContent='';
-  if(otp.length!==6){ errEl.textContent='6-digit OTP daalo'; return; }
-  if(!confirmationResult){ errEl.textContent='Pehle OTP mangao'; return; }
-
-  qs('#verifyOtpBtn').disabled=true;
-  qs('#verifyOtpBtn').textContent='Verify ho raha hai...';
-
-  try{
-    await confirmationResult.confirm(otp);
-    // onAuthStateChanged will fire and showApp()
-  }catch(err){
-    console.error('OTP verify error',err);
-    errEl.textContent=getFirebaseErrMsg(err);
-    qs('#verifyOtpBtn').disabled=false;
-    qs('#verifyOtpBtn').textContent='Verify & Login ✅';
-  }
-});
-
-/* ── Resend OTP ── */
-qs('#resendBtn').addEventListener('click',async()=>{
-  qs('#resendBtn').classList.add('hidden');
-  qs('#otpErr').textContent='';
-  const phone=qs('#phoneInp').value.trim().replace(/\D/g,'');
-  const code=qs('#countryCode').value.trim()||'+91';
-  const fullPhone=code+phone;
-  try{
-    setupRecaptcha();
-    confirmationResult=await auth.signInWithPhoneNumber(fullPhone,window.recaptchaVerifier);
-    startTimer(60);
-    clearOTP();
-    qs('#otpErr').textContent='';
-  }catch(err){
-    qs('#otpErr').textContent=getFirebaseErrMsg(err);
-    qs('#resendBtn').classList.remove('hidden');
-  }
-});
-
-/* ── Back button ── */
-qs('#backBtn').addEventListener('click',()=>{
-  clearInterval(timerInterval);
-  qs('#step2').classList.remove('active');
-  qs('#step1').classList.add('active');
-  qs('#phoneErr').textContent='';
-  qs('#otpErr').textContent='';
-});
-
-/* ── Firebase error messages in Hindi ── */
-function getFirebaseErrMsg(err){
-  const code=err.code||'';
-  const msgs={
-    'auth/invalid-phone-number':'Phone number galat hai',
-    'auth/too-many-requests':'Bahut zyada requests. Thodi der baad try karo',
-    'auth/invalid-verification-code':'OTP galat hai. Dobara try karo',
-    'auth/code-expired':'OTP expire ho gaya. Dobara bhejo',
-    'auth/missing-phone-number':'Phone number daalo',
-    'auth/quota-exceeded':'SMS limit khatam. Kal try karo',
-    'auth/captcha-check-failed':'reCAPTCHA failed. Page refresh karo',
-    'auth/network-request-failed':'Internet check karo',
-  };
-  return msgs[code]||('Error: '+err.message);
-}
-
-/* ── Auth State ── */
-auth.onAuthStateChanged(user=>{
-  if(user) showApp(user);
-  else showLogin();
-});
-
-/* ── Export PDF ── */
+/* ══ Export PDF ══ */
 async function exportPDF(){
-  const combined=(entriesIn||[]).concat(entriesOut||[]);
-  if(!combined.length){alert('Koi entry nahi');return;}
-  const print=qs('#printArea');
-  print.innerHTML='';
+  const all=(entriesIn||[]).concat(entriesOut||[]);
+  if(!all.length){alert('Koi entry nahi');return;}
+  const pr=qs('#printArea');pr.innerHTML='';
   const c=document.createElement('div');
+  const tI=entriesIn.reduce((s,x)=>s+Number(x.amount||0),0);
+  const tO=entriesOut.reduce((s,x)=>s+Number(x.amount||0),0);
   c.style.cssText='width:720px;background:#fff;padding:18px;border:4px solid #1e6bf0;border-radius:8px;box-sizing:border-box;color:#111;font-family:Arial,sans-serif;font-size:12px';
-  const tIn=entriesIn.reduce((s,x)=>s+Number(x.amount||0),0);
-  const tOut=entriesOut.reduce((s,x)=>s+Number(x.amount||0),0);
-  c.innerHTML=`
-    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:22px;font-weight:800;color:#0b3db8">HISAB PREM</div>
-      <div style="text-align:right"><div style="font-weight:700;color:#0b3db8">Account Statement</div>
-      <div style="font-size:11px;color:#333">${currentUser?currentUser.phoneNumber:''}</div>
-      <div style="font-size:11px;color:#333">${new Date().toLocaleString('en-IN')}</div></div>
-    </div>
-    <div style="display:flex;gap:10px;margin-bottom:12px">
-      <div style="flex:1;padding:10px;background:#f7fff7;border:1px solid #c8f5e0;border-radius:6px;text-align:center"><div style="font-size:11px;color:#444">Cash In</div><div style="font-weight:700">₹${tIn.toLocaleString('en-IN')}</div></div>
-      <div style="flex:1;padding:10px;background:#fff7f7;border:1px solid #ffd0d0;border-radius:6px;text-align:center"><div style="font-size:11px;color:#444">Cash Out</div><div style="font-weight:700">₹${tOut.toLocaleString('en-IN')}</div></div>
-      <div style="flex:1;padding:10px;background:#f0f6ff;border:1px solid #cce0ff;border-radius:6px;text-align:center"><div style="font-size:11px;color:#444">Balance</div><div style="font-weight:700">₹${(tIn-tOut).toLocaleString('en-IN')}</div></div>
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:12px">
-      <thead><tr style="background:#f0f6ff">
-        <th style="border:1px solid #dde;padding:6px;text-align:left">Date</th>
-        <th style="border:1px solid #dde;padding:6px;text-align:left">Type</th>
-        <th style="border:1px solid #dde;padding:6px;text-align:right">Amount</th>
-        <th style="border:1px solid #dde;padding:6px;text-align:left">Note</th>
-      </tr></thead>
-      <tbody>${
-        [...(entriesIn||[]).map(e=>({...e,_t:'Cash In'})),...(entriesOut||[]).map(e=>({...e,_t:'Cash Out'}))]
-        .sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))
-        .map(r=>`<tr>
-          <td style="border:1px solid #eef;padding:6px">${escHtml(r.date)}</td>
-          <td style="border:1px solid #eef;padding:6px">${r._t}</td>
-          <td style="border:1px solid #eef;padding:6px;text-align:right">₹${Number(r.amount).toLocaleString('en-IN')}</td>
-          <td style="border:1px solid #eef;padding:6px">${escHtml(r.note||'')}</td>
-        </tr>`).join('')
-      }</tbody>
-    </table>
-    <div style="margin-top:12px;font-size:11px;color:#666;text-align:center">Generated by HISAB PREM</div>`;
-  print.appendChild(c);
-  print.style.display='block';
+  c.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:14px">
+    <div style="font-size:24px;font-weight:800;color:#0b3db8">HISAB PREM</div>
+    <div style="text-align:right"><div style="font-weight:700;color:#0b3db8;font-size:15px">Account Statement</div>
+    <div style="font-size:11px;color:#555;margin-top:4px">${currentUser?esc(currentUser.email||currentUser.displayName||''):''}</div>
+    <div style="font-size:11px;color:#555">${new Date().toLocaleString('en-IN')}</div></div></div>
+  <div style="display:flex;gap:10px;margin-bottom:14px">
+    <div style="flex:1;padding:10px;background:#f0fff8;border:1px solid #b2f0d8;border-radius:6px;text-align:center"><div style="font-size:11px;color:#444">Cash In</div><div style="font-weight:800;color:#16a06f">₹${tI.toLocaleString('en-IN')}</div></div>
+    <div style="flex:1;padding:10px;background:#fff0f0;border:1px solid #ffc0c0;border-radius:6px;text-align:center"><div style="font-size:11px;color:#444">Cash Out</div><div style="font-weight:800;color:#e05050">₹${tO.toLocaleString('en-IN')}</div></div>
+    <div style="flex:1;padding:10px;background:#f0f6ff;border:1px solid #b8d4ff;border-radius:6px;text-align:center"><div style="font-size:11px;color:#444">Balance</div><div style="font-weight:800;color:#1e6bf0">₹${(tI-tO).toLocaleString('en-IN')}</div></div>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:#f0f6ff">
+      <th style="border:1px solid #dde;padding:7px;text-align:left">Date</th>
+      <th style="border:1px solid #dde;padding:7px;text-align:left">Type</th>
+      <th style="border:1px solid #dde;padding:7px;text-align:right">Amount</th>
+      <th style="border:1px solid #dde;padding:7px;text-align:left">Note</th>
+    </tr></thead>
+    <tbody>${[...(entriesIn||[]).map(e=>({...e,_t:'Cash In'})),...(entriesOut||[]).map(e=>({...e,_t:'Cash Out'}))]
+      .sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))
+      .map(r=>`<tr><td style="border:1px solid #eef;padding:6px">${esc(r.date)}</td><td style="border:1px solid #eef;padding:6px">${r._t}</td><td style="border:1px solid #eef;padding:6px;text-align:right">₹${Number(r.amount).toLocaleString('en-IN')}</td><td style="border:1px solid #eef;padding:6px">${esc(r.note||'')}</td></tr>`).join('')}
+    </tbody></table>
+  <div style="margin-top:12px;font-size:11px;color:#888;text-align:center">Generated by HISAB PREM — Personal Account Tracker</div>`;
+  pr.appendChild(c);pr.style.display='block';
   await html2pdf().set({margin:[8,8,8,8],filename:'HISAB_PREM.pdf',html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(c).save();
-  print.style.display='none';
-  print.innerHTML='';
+  pr.style.display='none';pr.innerHTML='';
 }
 
-/* ── Live time ── */
-function tickTime(){ qs('#appTime').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:true}); }
-setInterval(tickTime,1000); tickTime();
-
-/* ── UI Bindings ── */
-window.openEdit=openEdit;
-window.deleteEntry=deleteEntry;
-
+/* ══ Bindings ══ */
+window.openEdit=openEdit;window.deleteEntry=deleteEntry;
 qs('#fabAdd').addEventListener('click',()=>openAdd('in'));
 qs('#btnQuickIn').addEventListener('click',()=>navigate('in'));
 qs('#btnQuickOut').addEventListener('click',()=>navigate('out'));
 qs('#cancelBtn').addEventListener('click',closeModal);
 qs('#saveBtn').addEventListener('click',saveEntry);
-qs('#modalAdd').addEventListener('click',e=>{ if(e.target===qs('#modalAdd')) closeModal(); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+qs('#modalAdd').addEventListener('click',e=>{if(e.target===qs('#modalAdd'))closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 qs('#exportBtn').addEventListener('click',exportPDF);
+window.addEventListener('online',()=>{if(currentUser)subscribeFS();});
+window.addEventListener('offline',()=>setSync('🔴 Offline','var(--red)'));
 
-window.addEventListener('online',()=>{ if(currentUser) subscribeFirestore(); });
-window.addEventListener('offline',()=>setSyncStatus('🔴 Offline','var(--red)'));
-
-/* Phone input — only numbers */
-qs('#phoneInp').addEventListener('input',e=>{
-  e.target.value=e.target.value.replace(/\D/g,'');
-});
+/* ══ Time ══ */
+function tick(){qs('#appTime').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:true});}
+setInterval(tick,1000);tick();
 </script>
 </body>
 </html>
