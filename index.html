@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>HISAB PREM — Firebase</title>
+  <title>HISAB PREM</title>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -11,814 +11,783 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/2.9.0/dom-to-image-more.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --bg:#071117; --card:#0b1113; --accent:#1e6bf0; --green:#24c28b; --red:#ff6b6b; --muted:#98a2a6; --text:#eaf2f5;
+      --bg:#071117; --accent:#1e6bf0; --green:#24c28b; --red:#ff6b6b; --muted:#98a2a6; --text:#eaf2f5;
     }
-    *{box-sizing:border-box}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#041018);color:var(--text);-webkit-font-smoothing:antialiased}
-    .appbar{display:flex;align-items:center;padding:12px 16px;background:linear-gradient(90deg,var(--accent),#1e88e5);box-shadow:0 6px 20px rgba(0,0,0,0.45)}
-    .logo{display:flex;align-items:center;gap:10px}
-    .logo svg{width:44px;height:44px}
-    .title{font-weight:700;font-size:18px}
-    .time{font-weight:600;font-size:13px;color:rgba(255,255,255,0.95)}
-    .container{max-width:980px;margin:14px auto;padding:0 16px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));border-radius:12px;padding:14px;box-shadow:0 10px 36px rgba(0,0,0,0.5)}
-    .balanceRow{display:flex;gap:16px;align-items:center}
-    .balanceLeft{flex:1}
+
+    /* ── LOGIN SCREEN ── */
+    #loginScreen{display:none;position:fixed;inset:0;background:linear-gradient(180deg,#071117,#041018);z-index:500;align-items:center;justify-content:center}
+    #loginScreen.show{display:flex}
+    .loginCard{background:linear-gradient(180deg,#0b1c24,#0a1820);border-radius:20px;padding:36px 28px;text-align:center;box-shadow:0 28px 80px rgba(0,0,0,0.7);width:92%;max-width:380px}
+    .logo-big{font-size:32px;font-weight:800;color:#eaf2f5;letter-spacing:2px;margin-bottom:4px}
+    .logo-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+
+    /* Steps */
+    .step{display:none}
+    .step.active{display:block}
+
+    .inp{width:100%;padding:14px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:var(--text);font-size:18px;font-weight:600;margin-top:10px;outline:none;transition:border 0.2s}
+    .inp:focus{border-color:var(--accent)}
+    .inp::placeholder{color:var(--muted);font-weight:400;font-size:15px}
+
+    .btn{width:100%;padding:14px;border-radius:10px;border:none;font-size:16px;font-weight:700;cursor:pointer;margin-top:14px;transition:opacity 0.2s}
+    .btn:active{opacity:0.85}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),#1e88e5);color:#fff}
+    .btn-green{background:linear-gradient(135deg,var(--green),#13a76b);color:#042216}
+    .btn-link{background:transparent;color:var(--muted);font-size:13px;margin-top:6px;padding:8px}
+
+    .err{color:var(--red);font-size:12px;margin-top:10px;min-height:18px}
+    .info{color:var(--muted);font-size:13px;margin-top:8px}
+
+    /* reCAPTCHA container */
+    #recaptcha-container{margin-top:14px;display:flex;justify-content:center}
+
+    /* Phone flag+input row */
+    .phoneRow{display:flex;gap:8px;margin-top:10px}
+    .countryCode{width:80px;padding:14px 10px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:var(--text);font-size:16px;font-weight:700;text-align:center}
+    .phoneInp{flex:1;padding:14px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:var(--text);font-size:18px;font-weight:600;outline:none;transition:border 0.2s}
+    .phoneInp:focus{border-color:var(--accent)}
+    .phoneInp::placeholder{color:var(--muted);font-weight:400;font-size:15px}
+
+    /* OTP boxes */
+    .otpRow{display:flex;gap:10px;justify-content:center;margin-top:14px}
+    .otpBox{width:44px;height:52px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:var(--text);font-size:22px;font-weight:700;text-align:center;outline:none;transition:border 0.2s}
+    .otpBox:focus{border-color:var(--accent)}
+
+    /* Timer */
+    .timer{font-size:13px;color:var(--muted);margin-top:10px}
+    .timer span{color:var(--green);font-weight:700}
+
+    /* ── APPBAR ── */
+    .appbar{display:none;align-items:center;padding:12px 16px;background:linear-gradient(90deg,var(--accent),#1e88e5);box-shadow:0 6px 20px rgba(0,0,0,0.45)}
+    .appbar.show{display:flex}
+    .logo svg{width:40px;height:40px}
+    .title{font-weight:700;font-size:17px;margin-left:8px}
+    .appTime{font-weight:600;font-size:13px;color:rgba(255,255,255,0.95);margin-left:auto}
+    .userProfile{display:flex;align-items:center;gap:8px;margin-left:12px}
+    .userName{font-size:12px;font-weight:600;color:rgba(255,255,255,0.9)}
+    .logoutBtn{background:none;border:1px solid rgba(255,255,255,0.3);border-radius:6px;color:#fff;cursor:pointer;font-size:11px;padding:4px 8px;font-weight:600}
+
+    /* ── MAIN APP ── */
+    #appMain{display:none}
+    #appMain.show{display:block}
+    .container{max-width:980px;margin:14px auto;padding:0 14px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.03));border-radius:12px;padding:14px;box-shadow:0 10px 36px rgba(0,0,0,0.5)}
     .balanceTitle{font-size:13px;color:#cfeee4}
     .balanceAmt{font-weight:800;font-size:28px;margin-top:6px}
-    .ratio{height:12px;background:#081217;border-radius:999px;margin-top:10px;position:relative;overflow:hidden}
-    .ratio .in{height:100%;background:linear-gradient(90deg,var(--green),#16a06f);width:50%}
-    .ratio .out{height:100%;background:linear-gradient(90deg,var(--red),#ff7b7b);position:absolute;right:0;top:0;width:50%}
-    .summary{display:flex;gap:10px;margin-top:12px}
-    .summary .box{flex:1;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:700}
-    .summary .box.box-in{background:rgba(36,194,139,0.12);border:1px solid rgba(36,194,139,0.3);color:var(--green)}
-    .summary .box.box-out{background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.3);color:var(--red)}
-    .summary .box.box-bal{background:rgba(30,107,240,0.12);border:1px solid rgba(30,107,240,0.3);color:#7eb8ff}
-    .summary .box .label{font-size:12px;font-weight:600;opacity:0.75;margin-bottom:4px}
-    .summary .box .val{font-size:18px;margin-top:4px;font-weight:800}
-    .chartWrap{margin-top:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.03))}
-    #chartSmall{width:100%;height:100%;display:block; max-width:300px; max-height:300px; margin:0 auto;}
-    .midControls{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
-    .smallBtn{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);font-weight:700;cursor:pointer}
+    .ratio{height:10px;background:#081217;border-radius:999px;margin-top:10px;position:relative;overflow:hidden}
+    .ratio .ri{height:100%;background:linear-gradient(90deg,var(--green),#16a06f)}
+    .ratio .ro{height:100%;background:linear-gradient(90deg,var(--red),#ff7b7b);position:absolute;right:0;top:0}
+
+    .summary{display:flex;gap:8px;margin-top:12px}
+    .box{flex:1;padding:10px;border-radius:8px;font-weight:700}
+    .box-in{background:rgba(36,194,139,0.12);border:1px solid rgba(36,194,139,0.3);color:var(--green)}
+    .box-out{background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.3);color:var(--red)}
+    .box-bal{background:rgba(30,107,240,0.12);border:1px solid rgba(30,107,240,0.3);color:#7eb8ff}
+    .box .lbl{font-size:11px;font-weight:600;opacity:0.75}
+    .box .val{font-size:17px;font-weight:800;margin-top:4px}
+
+    .chartWrap{margin-top:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.01);text-align:center}
+    #chartSmall{max-width:200px;max-height:200px;margin:0 auto;display:block}
+
+    .midControls{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+    .smallBtn{padding:8px 14px;border-radius:999px;border:none;font-weight:700;cursor:pointer;font-size:14px}
     .smallBtn.in{background:linear-gradient(90deg,var(--green),#12a76a);color:#042216}
     .smallBtn.out{background:linear-gradient(90deg,var(--red),#ef6b6b);color:#2b0f0f}
-    .syncStatus{font-size:13px;color:var(--muted);font-weight:600}
-    .exportBtn{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:var(--text);font-weight:700;cursor:pointer;margin-left:8px}
-    .list{margin-top:14px;display:flex;flex-direction:column;gap:12px;padding-bottom:120px}
-    .tile{display:flex;justify-content:space-between;align-items:flex-start;padding:14px;border-radius:10px;background:linear-gradient(180deg,#071116,#071216);box-shadow:0 8px 22px rgba(0,0,0,0.6);border-left:8px solid transparent}
-    .leftCol{flex:1;padding-right:12px}
-    .amount{font-weight:800;font-size:20px}
-    .note{margin-top:6px;font-weight:700;font-size:14px;color:var(--text);white-space:pre-wrap}
-    .meta small{display:block;color:var(--muted);margin-top:8px}
+    .syncStatus{font-size:12px;font-weight:700;margin-left:auto}
+    .exportBtn{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:var(--text);font-weight:700;cursor:pointer;font-size:13px}
+
+    .list{margin-top:12px;display:flex;flex-direction:column;gap:10px;padding-bottom:100px}
+    .tile{display:flex;justify-content:space-between;align-items:flex-start;padding:14px;border-radius:10px;background:linear-gradient(180deg,#071116,#071216);box-shadow:0 6px 18px rgba(0,0,0,0.5);border-left:6px solid transparent}
     .tile.in{border-left-color:var(--green)}
     .tile.out{border-left-color:var(--red)}
-    .actionsCol{display:flex;flex-direction:column;gap:8px;margin-left:12px}
-    .iconBtn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
-    .iconBtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6}
-    .fab{position:fixed;right:16px;bottom:18px;width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--green),#13a76b);display:flex;align-items:center;justify-content:center;color:#042216;font-size:32px;box-shadow:0 18px 48px rgba(15,50,30,0.35);border:4px solid rgba(255,255,255,0.03);cursor:pointer;z-index:200}
-    .modal{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:150}
+    .tileLeft{flex:1;padding-right:10px}
+    .tileAmt{font-weight:800;font-size:20px}
+    .tileNote{margin-top:5px;font-size:14px;font-weight:600;white-space:pre-wrap}
+    .tileMeta{font-size:12px;color:var(--muted);margin-top:6px}
+    .tileActions{display:flex;flex-direction:column;gap:8px}
+    .iconBtn{width:38px;height:38px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer}
+    .iconBtn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.6}
+
+    .fab{position:fixed;right:16px;bottom:18px;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,var(--green),#13a76b);display:flex;align-items:center;justify-content:center;color:#042216;font-size:30px;box-shadow:0 16px 40px rgba(15,50,30,0.4);border:3px solid rgba(255,255,255,0.05);cursor:pointer;z-index:200;display:none}
+    .fab.show{display:flex}
+
+    .modal{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);z-index:300}
     .modal.open{display:flex}
-    .modalCard{width:92%;max-width:520px;background:linear-gradient(180deg,#071417,#07181a);border-radius:12px;padding:16px;box-shadow:0 28px 80px rgba(0,0,0,0.7)}
-    .input{width:100%;padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:inherit;margin-top:8px;font-size:18px;font-weight:600}
+    .modalCard{width:92%;max-width:500px;background:linear-gradient(180deg,#071417,#07181a);border-radius:14px;padding:18px;box-shadow:0 28px 80px rgba(0,0,0,0.7)}
+    .minput{width:100%;padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:inherit;margin-top:8px;font-size:18px;font-weight:600;outline:none}
     .hidden{display:none!important}
-    .center{display:flex;align-items:center;justify-content:center}
-
-    /* Firebase Auth UI */
-    #loginScreen{display:none;position:fixed;inset:0;background:linear-gradient(180deg,var(--bg),#041018);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:20px}
-    #loginScreen.show{display:flex}
-    .loginCard{background:linear-gradient(180deg,#0b1c24,#0a1820);border-radius:16px;padding:40px 32px;text-align:center;box-shadow:0 28px 80px rgba(0,0,0,0.7);max-width:360px;width:90%}
-    .loginCard .logo-big{font-size:36px;font-weight:800;color:#eaf2f5;letter-spacing:1px}
-    .loginCard p{color:var(--muted);font-size:14px;margin:10px 0 28px}
-    #googleLoginBtn{display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#333;border:none;border-radius:8px;padding:14px 24px;font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:opacity 0.2s}
-    #googleLoginBtn:hover{opacity:0.9}
-    #googleLoginBtn svg{width:22px;height:22px}
-
-    /* User profile in appbar */
-    .user-profile{display:flex;align-items:center;gap:8px;margin-left:auto}
-    .user-img{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,0.5)}
-    .user-name{font-size:12px;font-weight:600;color:rgba(255,255,255,0.9)}
-    .logout-btn{background:none;border:1px solid rgba(255,255,255,0.25);border-radius:6px;color:rgba(255,255,255,0.8);cursor:pointer;font-size:11px;padding:4px 8px;font-weight:600}
-    .logout-btn:hover{background:rgba(255,255,255,0.1)}
-
-    @media (max-width:700px){
-      .container{padding:0 12px}
-      .fab{right:12px;bottom:14px}
-    }
+    .sectionTitle{margin-top:18px;font-size:16px;font-weight:700}
   </style>
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
-  <div id="loginScreen" class="show">
-    <div class="loginCard">
-      <div class="logo-big">HISAB PREM</div>
-      <p>Sign in to sync your data across devices</p>
-      <button id="googleLoginBtn">
-        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.9 29.5 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.7-.2-3.3-.9-4.9z"/>
-          <path fill="#FF3D00" d="M6.3 15.2l6.6 4.8C14.7 16.2 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 7.4 29.5 5 24 5 16.3 5 9.6 9.2 6.3 15.2z"/>
-          <path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.1 36.5 26.6 37.5 24 37.5c-5.2 0-9.6-3.4-11.2-8H6.4C9.7 39.1 16.3 45 24 45z"/>
-          <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.2C41.2 35.6 44.5 31 44.5 25c0-1.7-.3-3.3-.9-4.9z"/>
-        </svg>
-        Sign in with Google
-      </button>
-      <div id="loginError" style="color:var(--red);font-size:12px;margin-top:12px;display:none"></div>
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="loginScreen" class="show">
+  <div class="loginCard">
+    <div class="logo-big">HISAB PREM</div>
+    <div class="logo-sub">Phone se login karein — data safe rahega ☁️</div>
+
+    <!-- Step 1: Phone number -->
+    <div class="step active" id="step1">
+      <div style="font-size:14px;color:var(--muted);text-align:left;margin-bottom:4px">Mobile Number</div>
+      <div class="phoneRow">
+        <input class="countryCode" id="countryCode" type="text" value="+91" maxlength="4" />
+        <input class="phoneInp" id="phoneInp" type="tel" placeholder="10-digit number" maxlength="10" inputmode="numeric" />
+      </div>
+      <div id="recaptcha-container"></div>
+      <button class="btn btn-primary" id="sendOtpBtn">OTP Bhejo 📲</button>
+      <div class="err" id="phoneErr"></div>
     </div>
+
+    <!-- Step 2: OTP -->
+    <div class="step" id="step2">
+      <div style="font-size:14px;color:var(--muted);margin-bottom:4px">OTP Enter Karein</div>
+      <div style="font-size:13px;color:var(--green);margin-bottom:4px" id="otpSentTo"></div>
+      <div class="otpRow">
+        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
+        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
+        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
+        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
+        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
+        <input class="otpBox" maxlength="1" inputmode="numeric" type="tel" />
+      </div>
+      <button class="btn btn-green" id="verifyOtpBtn">Verify & Login ✅</button>
+      <div class="timer" id="timerEl">Resend in <span id="timerCount">60</span>s</div>
+      <button class="btn btn-link hidden" id="resendBtn">🔄 OTP Dobara Bhejo</button>
+      <button class="btn btn-link" id="backBtn">← Wapas Jaao</button>
+      <div class="err" id="otpErr"></div>
+    </div>
+
   </div>
+</div>
 
-  <!-- MAIN APP -->
-  <div id="appbar" class="appbar" style="display:none">
-    <div class="logo" aria-hidden>
-      <svg viewBox="0 0 140 60" xmlns="http://www.w3.org/2000/svg"><g transform="translate(6,6)"><text x="0" y="16" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#fff">HISAB</text><text x="0" y="36" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#fff">PREM</text></g></svg>
-    </div>
-    <div style="margin-left:10px">
-      <div class="title">HISAB PREM</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.95)" id="syncLabel">Cloud Sync</div>
-    </div>
-    <div id="appTime" class="time" style="margin-left:auto">--:--</div>
-    <div class="user-profile" id="userProfile">
-      <!-- filled by auth -->
-    </div>
+<!-- ══ APP BAR ══ -->
+<div class="appbar" id="appbar">
+  <div class="logo">
+    <svg viewBox="0 0 140 60" xmlns="http://www.w3.org/2000/svg"><g transform="translate(6,6)"><text x="0" y="16" font-family="Inter,Arial" font-size="14" font-weight="700" fill="#fff">HISAB</text><text x="0" y="36" font-family="Inter,Arial" font-size="14" font-weight="700" fill="#fff">PREM</text></g></svg>
   </div>
+  <span class="title">HISAB PREM</span>
+  <span class="appTime" id="appTime">--:--</span>
+  <div class="userProfile">
+    <span class="userName" id="userName"></span>
+    <button class="logoutBtn" onclick="handleLogout()">Logout</button>
+  </div>
+</div>
 
-  <div id="appMain" style="display:none">
-    <div class="container">
-      <div class="card">
-        <div class="balanceRow">
-          <div class="balanceLeft">
-            <div class="balanceTitle">Current Balance</div>
-            <div id="balanceAmt" class="balanceAmt">₹0</div>
-            <div class="ratio" aria-hidden><div id="ratioIn" class="in" style="width:50%"></div><div id="ratioOut" class="out" style="width:50%"></div></div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:12px;color:var(--muted)">Overview</div>
-            <div style="margin-top:6px"><small class="meta" id="collectionInfo">Syncing...</small></div>
-          </div>
+<!-- ══ MAIN APP ══ -->
+<div id="appMain">
+  <div class="container">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="balanceTitle">Current Balance</div>
+          <div class="balanceAmt" id="balanceAmt">₹0</div>
+          <div class="ratio"><div class="ri" id="ratioIn" style="width:50%"></div><div class="ro" id="ratioOut" style="width:50%"></div></div>
         </div>
-
-        <div class="summary" style="margin-top:12px">
-          <div class="box box-in"><div class="label">Cash In</div><div id="sumIn" class="val">₹0</div></div>
-          <div class="box box-out"><div class="label">Cash Out</div><div id="sumOut" class="val">₹0</div></div>
-          <div class="box box-bal"><div class="label">Balance</div><div id="sumBal" class="val">₹0</div></div>
-        </div>
-
-        <div class="chartWrap">
-          <canvas id="chartSmall" width="150" height="150"></canvas>
-        </div>
-
-        <div class="midControls">
-          <button class="smallBtn in" id="btnQuickIn">Cash In</button>
-          <button class="smallBtn out" id="btnQuickOut">Cash Out</button>
-          <div class="syncStatus" id="syncStatus">Connecting...</div>
-          <button id="exportBtn" class="exportBtn" title="Export PDF">📄 Export</button>
-        </div>
+        <div style="text-align:right;font-size:11px;color:var(--muted)" id="collectionInfo">Loading...</div>
       </div>
 
-      <div id="page-in" class="page">
-        <h3 style="margin-top:18px">Recent Cash In</h3>
-        <div id="listIn" class="list"></div>
+      <div class="summary">
+        <div class="box box-in"><div class="lbl">Cash In</div><div class="val" id="sumIn">₹0</div></div>
+        <div class="box box-out"><div class="lbl">Cash Out</div><div class="val" id="sumOut">₹0</div></div>
+        <div class="box box-bal"><div class="lbl">Balance</div><div class="val" id="sumBal">₹0</div></div>
       </div>
 
-      <div id="page-out" class="page hidden">
-        <h3 style="margin-top:18px">Recent Cash Out</h3>
-        <div id="listOut" class="list"></div>
+      <div class="chartWrap">
+        <canvas id="chartSmall" width="150" height="150"></canvas>
       </div>
-    </div>
-  </div>
 
-  <button class="fab hidden" id="fabAdd" aria-label="Add">+</button>
-
-  <div class="modal" id="modalAdd" aria-hidden>
-    <div class="modalCard" role="dialog" aria-modal="true">
-      <h3 id="modalTitle">Add / Edit Entry</h3>
-      <select id="typeSel" class="input">
-        <option value="in">Cash In</option>
-        <option value="out">Cash Out</option>
-      </select>
-      <input id="amtInp" class="input" type="text" inputmode="decimal" placeholder="Amount (₹)" />
-      <input id="noteInp" class="input" type="text" placeholder="Note (optional)" />
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
-        <button id="saveBtn" class="input"
-          style="background:linear-gradient(135deg,var(--green),#13a76b);color:#042216;font-weight:800">
-          Save
-        </button>
-        <button id="cancelBtn" class="input"
-          style="background:transparent;border:1px solid rgba(255,255,255,0.03)">
-          Cancel
-        </button>
+      <div class="midControls">
+        <button class="smallBtn in" id="btnQuickIn">Cash In</button>
+        <button class="smallBtn out" id="btnQuickOut">Cash Out</button>
+        <div class="syncStatus" id="syncStatus">🔄</div>
+        <button class="exportBtn" id="exportBtn">📄 Export</button>
       </div>
     </div>
+
+    <div id="page-in">
+      <div class="sectionTitle">Recent Cash In</div>
+      <div id="listIn" class="list"></div>
+    </div>
+    <div id="page-out" class="hidden">
+      <div class="sectionTitle">Recent Cash Out</div>
+      <div id="listOut" class="list"></div>
+    </div>
   </div>
+</div>
 
-  <div id="printArea" style="display:none"></div>
+<button class="fab" id="fabAdd">+</button>
 
-  <script>
-    /* ===========================
-       HISAB PREM — Firebase Version
-       - Google Login via Firebase Auth
-       - Data stored in Firestore per user
-       - Local cache for offline fallback
-       =========================== */
+<!-- Add/Edit Modal -->
+<div class="modal" id="modalAdd">
+  <div class="modalCard">
+    <h3 id="modalTitle" style="margin:0 0 4px">Add Entry</h3>
+    <select id="typeSel" class="minput">
+      <option value="in">Cash In</option>
+      <option value="out">Cash Out</option>
+    </select>
+    <input id="amtInp" class="minput" type="text" inputmode="decimal" placeholder="Amount (₹)" />
+    <input id="noteInp" class="minput" type="text" placeholder="Note (optional)" />
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button id="saveBtn" class="minput" style="background:linear-gradient(135deg,var(--green),#13a76b);color:#042216;font-weight:800;cursor:pointer;border:none">Save</button>
+      <button id="cancelBtn" class="minput" style="background:transparent;border:1px solid rgba(255,255,255,0.06);cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
 
-    /* --- Firebase Init --- */
-    const firebaseConfig = {
-      apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
-      authDomain: "hisabprem.firebaseapp.com",
-      projectId: "hisabprem",
-      storageBucket: "hisabprem.firebasestorage.app",
-      messagingSenderId: "299571413492",
-      appId: "1:299571413492:web:de65e2a8d3544060fcb9a1"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    // Enable Firestore offline persistence
-    const db = firebase.firestore();
-    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
-      if(err.code === 'failed-precondition'){
-        console.warn('Firestore persistence unavailable (multiple tabs)');
-      } else if(err.code === 'unimplemented'){
-        console.warn('Firestore persistence not supported in this browser');
-      }
-    });
-    const provider = new firebase.auth.GoogleAuthProvider();
+<div id="printArea" style="display:none"></div>
 
-    /* --- State --- */
-    let currentUser = null;
-    let entriesIn = [];
-    let entriesOut = [];
-    let editingItem = null;
-    let unsubscribeIn = null;
-    let unsubscribeOut = null;
+<script>
+/* ══════════════════════════════
+   HISAB PREM — Phone OTP Login
+   Works in WebView + Browser
+══════════════════════════════ */
 
-    /* LOCAL CACHE KEYS */
-    const LOCAL_IN = 'hisabprem_in';
-    const LOCAL_OUT = 'hisabprem_out';
+/* ── Firebase Init ── */
+const firebaseConfig = {
+  apiKey: "AIzaSyA_prff3ZJmhtt_I2RFfbfJsuym-29O7ng",
+  authDomain: "hisabprem.firebaseapp.com",
+  projectId: "hisabprem",
+  storageBucket: "hisabprem.firebasestorage.app",
+  messagingSenderId: "299571413492",
+  appId: "1:299571413492:web:de65e2a8d3544060fcb9a1"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-    /* --- Helpers --- */
-    const qs = sel => document.querySelector(sel);
-    function nowStr(ts){ return new Date(ts||Date.now()).toLocaleString(); }
-    function safeNum(v){ const n = Number(v); return Number.isFinite(n) ? n : null; }
-    function fmt(n){ return Number(n).toLocaleString(); }
-    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
 
-    /* --- DOM refs --- */
-    const listInEl = qs('#listIn');
-    const listOutEl = qs('#listOut');
-    const sumInEl = qs('#sumIn');
-    const sumOutEl = qs('#sumOut');
-    const sumBalEl = qs('#sumBal');
-    const balanceAmtEl = qs('#balanceAmt');
-    const ratioInEl = qs('#ratioIn');
-    const ratioOutEl = qs('#ratioOut');
-    const syncStatusEl = qs('#syncStatus');
-    const appTimeEl = qs('#appTime');
-    const modal = qs('#modalAdd');
-    const fab = qs('#fabAdd');
-    const btnQuickIn = qs('#btnQuickIn');
-    const btnQuickOut = qs('#btnQuickOut');
-    const saveBtn = qs('#saveBtn');
-    const cancelBtn = qs('#cancelBtn');
-    const typeSel = qs('#typeSel');
-    const amtInp = qs('#amtInp');
-    const noteInp = qs('#noteInp');
-    const modalTitle = qs('#modalTitle');
-    const exportBtn = qs('#exportBtn');
+/* ── State ── */
+let currentUser = null;
+let entriesIn = [], entriesOut = [];
+let editingItem = null;
+let unsubIn = null, unsubOut = null;
+let confirmationResult = null;
+let timerInterval = null;
 
-    /* --- Live time --- */
-    function tickTime(){ appTimeEl.textContent = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:true}); }
-    setInterval(tickTime, 1000); tickTime();
+const LOCAL_IN = 'hp_in', LOCAL_OUT = 'hp_out';
 
-    /* --- Local cache --- */
-    function loadLocal(){
-      try{
-        const a = JSON.parse(localStorage.getItem(LOCAL_IN)||'null');
-        const b = JSON.parse(localStorage.getItem(LOCAL_OUT)||'null');
-        entriesIn = Array.isArray(a) ? a : [];
-        entriesOut = Array.isArray(b) ? b : [];
-      }catch(e){ entriesIn=[]; entriesOut=[]; }
-    }
-    function persistLocal(){
-      try{
-        localStorage.setItem(LOCAL_IN, JSON.stringify(entriesIn));
-        localStorage.setItem(LOCAL_OUT, JSON.stringify(entriesOut));
-      }catch(e){ console.warn('persistLocal', e); }
-    }
+/* ── Helpers ── */
+const qs = s => document.querySelector(s);
+const qsa = s => document.querySelectorAll(s);
+function nowStr(ts){ return new Date(ts||Date.now()).toLocaleString('en-IN'); }
+function safeNum(v){ const n=Number(v); return Number.isFinite(n)?n:null; }
+function fmt(n){ return Number(n).toLocaleString('en-IN'); }
+function escHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    /* --- Firebase Firestore helpers --- */
-    function userCol(type){
-      // Each user gets their own subcollection: users/{uid}/entries_in or entries_out
-      return db.collection('users').doc(currentUser.uid).collection(type === 'in' ? 'entries_in' : 'entries_out');
-    }
+/* ── Local cache ── */
+function loadLocal(){
+  try{
+    const a=JSON.parse(localStorage.getItem(LOCAL_IN)||'null');
+    const b=JSON.parse(localStorage.getItem(LOCAL_OUT)||'null');
+    entriesIn=Array.isArray(a)?a:[];
+    entriesOut=Array.isArray(b)?b:[];
+  }catch(e){entriesIn=[];entriesOut=[];}
+}
+function saveLocal(){
+  try{
+    localStorage.setItem(LOCAL_IN,JSON.stringify(entriesIn));
+    localStorage.setItem(LOCAL_OUT,JSON.stringify(entriesOut));
+  }catch(e){}
+}
 
-    /* Real-time listener — subscribes to both collections */
-    function subscribeFirestore(){
-      if(unsubscribeIn) unsubscribeIn();
-      if(unsubscribeOut) unsubscribeOut();
+/* ── Firestore ── */
+function userCol(type){
+  return db.collection('users').doc(currentUser.uid).collection(type==='in'?'entries_in':'entries_out');
+}
 
-      syncStatusEl.textContent = '🔄 Syncing...';
-      syncStatusEl.style.color = 'var(--muted)';
+function subscribeFirestore(){
+  if(unsubIn) unsubIn();
+  if(unsubOut) unsubOut();
+  setSyncStatus('🔄','var(--muted)');
 
-      let inReady = false, outReady = false;
+  let inReady=false, outReady=false;
 
-      function updateSyncUI(fromCache){
-        if(fromCache){
-          syncStatusEl.textContent = '🔴 Offline';
-          syncStatusEl.style.color = 'var(--red)';
-        } else {
-          syncStatusEl.textContent = '🟢 Synced';
-          syncStatusEl.style.color = 'var(--green)';
-        }
-      }
+  function updateUI(fromCache){
+    setSyncStatus(fromCache?'🔴 Offline':'🟢 Synced', fromCache?'var(--red)':'var(--green)');
+  }
 
-      unsubscribeIn = userCol('in')
-        .orderBy('updatedAt','desc')
-        .onSnapshot({ includeMetadataChanges: true }, snap => {
-          // Skip snapshots from local pending writes to avoid flicker/duplicates
-          if(snap.metadata.hasPendingWrites) return;
-          entriesIn = snap.docs.map(d => ({ ...d.data(), id: d.id }));
-          // Deduplicate by id just in case
-          const seen = new Set();
-          entriesIn = entriesIn.filter(e => { if(seen.has(e.id)) return false; seen.add(e.id); return true; });
-          persistLocal();
-          inReady = true;
-          if(outReady) updateSyncUI(snap.metadata.fromCache);
-          renderAll();
-        }, err => {
-          console.warn('Firestore in error', err);
-          syncStatusEl.textContent = '🔴 Offline';
-          syncStatusEl.style.color = 'var(--red)';
-          loadLocal(); renderAll();
-        });
-
-      unsubscribeOut = userCol('out')
-        .orderBy('updatedAt','desc')
-        .onSnapshot({ includeMetadataChanges: true }, snap => {
-          if(snap.metadata.hasPendingWrites) return;
-          entriesOut = snap.docs.map(d => ({ ...d.data(), id: d.id }));
-          const seen = new Set();
-          entriesOut = entriesOut.filter(e => { if(seen.has(e.id)) return false; seen.add(e.id); return true; });
-          persistLocal();
-          outReady = true;
-          if(inReady) updateSyncUI(snap.metadata.fromCache);
-          renderAll();
-        }, err => {
-          console.warn('Firestore out error', err);
-        });
-    }
-
-    /* --- Render --- */
-    function tileHTML(e){
-      const note = escapeHtml(e.note||'');
-      const date = escapeHtml(e.date||nowStr());
-      const amount = fmt(e.amount||0);
-      const cls = e.type === 'out' ? 'out' : 'in';
-      return `<div class="tile ${cls}" data-id="${e.id}">
-        <div class="leftCol">
-          <div class="amount">₹${amount}</div>
-          <div class="note">${note||'&nbsp;'}</div>
-          <div class="meta"><small>${date}</small></div>
-        </div>
-        <div class="actionsCol">
-          <button class="iconBtn" title="Edit" onclick="openEdit('${e.id}','${e.type}')">
-            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="iconBtn" title="Delete" onclick="deleteEntry('${e.id}','${e.type}')">
-            <svg viewBox="0 0 24 24"><path d="M3 6h18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-      </div>`;
-    }
-
-    function renderLists(){
-      listInEl.innerHTML = '';
-      listOutEl.innerHTML = '';
-      if(entriesIn.length === 0) listInEl.innerHTML = '<div style="color:var(--muted);padding:12px;border-radius:10px">No Cash In entries</div>';
-      else entriesIn.forEach(e => listInEl.insertAdjacentHTML('beforeend', tileHTML(e)));
-      if(entriesOut.length === 0) listOutEl.innerHTML = '<div style="color:var(--muted);padding:12px;border-radius:10px">No Cash Out entries</div>';
-      else entriesOut.forEach(e => listOutEl.insertAdjacentHTML('beforeend', tileHTML(e)));
-    }
-
-    function renderSummary(){
-      const totalIn = entriesIn.reduce((s,x)=>s+(Number(x.amount)||0),0);
-      const totalOut = entriesOut.reduce((s,x)=>s+(Number(x.amount)||0),0);
-      sumInEl.textContent = '₹'+fmt(totalIn);
-      sumOutEl.textContent = '₹'+fmt(totalOut);
-      sumBalEl.textContent = '₹'+fmt(totalIn-totalOut);
-      balanceAmtEl.textContent = '₹'+fmt(totalIn-totalOut);
-      const total = (totalIn+totalOut)||1;
-      if(ratioInEl) ratioInEl.style.width = Math.round((totalIn/total)*100)+'%';
-      if(ratioOutEl) ratioOutEl.style.width = Math.round((totalOut/total)*100)+'%';
-    }
-
-    function renderChart(){
-      try{
-        const ctx = document.getElementById('chartSmall').getContext('2d');
-        const totalIn = entriesIn.reduce((s,x)=>s+(Number(x.amount)||0),0);
-        const totalOut = entriesOut.reduce((s,x)=>s+(Number(x.amount)||0),0);
-        if(window._donut) window._donut.destroy();
-        const canvas = document.getElementById('chartSmall');
-        canvas.width = 150;
-        canvas.height = 150;
-        window._donut = new Chart(ctx,{
-          type:'doughnut',
-          data:{ labels:['Cash In','Cash Out'], datasets:[{ data:[totalIn,totalOut], backgroundColor:['#24c28b','#ff6b6b'] }]},
-          options:{ responsive:false, maintainAspectRatio:false, cutout:'70%', plugins:{legend:{display:false}}}
-        });
-      }catch(e){ console.warn('chart', e); }
-    }
-
-    function renderAll(){ renderSummary(); renderLists(); renderChart(); }
-
-    /* --- Add / Edit / Delete --- */
-    function openAdd(type='in'){
-      editingItem = null;
-      modalTitle.textContent = 'Add Entry';
-      typeSel.value = type;
-      amtInp.value = '';
-      noteInp.value = '';
-      modal.classList.add('open');
-      document.body.style.overflow = 'hidden';
-      setTimeout(()=>{ try{ amtInp.focus(); }catch(e){} },50);
-    }
-
-    function openEdit(id, type){
-      const list = type === 'in' ? entriesIn : entriesOut;
-      const e = list.find(x=>String(x.id)===String(id));
-      if(!e) return;
-      editingItem = { id: e.id, type };
-      modalTitle.textContent = 'Edit Entry';
-      typeSel.value = type;
-      amtInp.value = String(e.amount||'');
-      noteInp.value = e.note||'';
-      modal.classList.add('open');
-      document.body.style.overflow = 'hidden';
-      setTimeout(()=>{ try{ amtInp.focus(); }catch(e){} },50);
-    }
-
-    function closeModal(){
-      modal.classList.remove('open');
-      editingItem = null;
-      document.body.style.overflow = '';
-    }
-
-    async function saveEntry(){
-      let amtVal = amtInp.value||'';
-      const dr = amtInp.getAttribute('data-result');
-      if(dr !== null && dr !== undefined && dr !== '') amtVal = dr;
-      const amt = safeNum(amtVal);
-      const note = (noteInp.value||'').trim();
-      const type = typeSel.value === 'out' ? 'out' : 'in';
-      if(amt === null || amt <= 0){ amtInp.focus(); return; }
-
-      // Disable save button to prevent double-tap
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Saving...';
-
-      const now = Date.now();
-
-      try{
-        if(editingItem){
-          // Preserve original date; only update updatedAt for ordering
-          const oldList = editingItem.type === 'in' ? entriesIn : entriesOut;
-          const oldEntry = oldList.find(x => String(x.id) === String(editingItem.id));
-          const originalDate = oldEntry ? oldEntry.date : nowStr(now);
-
-          const obj = { amount: amt, note, date: originalDate, updatedAt: now, type };
-
-          if(editingItem.type !== type){
-            // Type changed: use batch to delete old + add new atomically
-            const batch = db.batch();
-            const oldRef = userCol(editingItem.type).doc(String(editingItem.id));
-            const newRef = userCol(type).doc(); // new auto-id
-            batch.delete(oldRef);
-            batch.set(newRef, obj);
-            await batch.commit();
-          } else {
-            // Same type: update in place using same doc ID
-            await userCol(type).doc(String(editingItem.id)).set(obj);
-          }
-        } else {
-          const obj = { amount: amt, note, date: nowStr(now), updatedAt: now, type };
-          await userCol(type).add(obj);
-        }
-        syncStatusEl.textContent = '🟢 Saved';
-        syncStatusEl.style.color = 'var(--green)';
-      }catch(err){
-        console.error('saveEntry Firestore error', err);
-        // Offline fallback: update local cache only
-        if(editingItem){
-          const oldList = editingItem.type === 'in' ? entriesIn : entriesOut;
-          const oldEntry = oldList.find(x => String(x.id) === String(editingItem.id));
-          const originalDate = oldEntry ? oldEntry.date : nowStr(now);
-          const localObj = { amount: amt, note, date: originalDate, updatedAt: now, type, id: editingItem.id };
-          if(editingItem.type==='in') entriesIn = entriesIn.filter(x=>String(x.id)!==String(editingItem.id));
-          else entriesOut = entriesOut.filter(x=>String(x.id)!==String(editingItem.id));
-          if(type==='in') entriesIn.unshift(localObj); else entriesOut.unshift(localObj);
-        } else {
-          const localObj = { amount: amt, note, date: nowStr(now), updatedAt: now, type, id: String(now) };
-          if(type==='in') entriesIn.unshift(localObj); else entriesOut.unshift(localObj);
-        }
-        persistLocal();
-        renderAll();
-        syncStatusEl.textContent = '🔴 Offline (saved local)';
-        syncStatusEl.style.color = 'var(--red)';
-      }
-
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Save';
-      closeModal();
-    }
-
-    async function deleteEntry(id, type){
-      if(!confirm('Delete this entry?')) return;
-      try{
-        await userCol(type).doc(String(id)).delete();
-        syncStatusEl.textContent = '🟢 Deleted';
-      }catch(err){
-        console.error('deleteEntry error', err);
-        if(type==='in') entriesIn = entriesIn.filter(x=>String(x.id)!==String(id));
-        else entriesOut = entriesOut.filter(x=>String(x.id)!==String(id));
-        persistLocal();
-        renderAll();
-        syncStatusEl.textContent = '🔴 Offline (deleted local)';
-      }
-    }
-
-    /* --- Calculator logic for amount field --- */
-    amtInp.addEventListener("keydown", (e) => {
-      // Allow: backspace, delete, tab, escape, enter, arrows, home, end
-      const allowed = ['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
-      if(allowed.includes(e.key)) return;
-      // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-      if((e.ctrlKey||e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
-      // Allow: 0-9, +, -, *, /, ., (, ), space
-      if(!/^[0-9+\-*\/.()\s]$/.test(e.key)){
-        e.preventDefault();
-      }
-    });
-    amtInp.addEventListener("input", (e) => {
-      // Strip any non-allowed characters that may have been pasted
-      const cleaned = e.target.value.replace(/[^0-9+\-*\/.()\s]/g, '');
-      if(cleaned !== e.target.value) e.target.value = cleaned;
-      const val = cleaned;
-      try {
-        if (/^[0-9+\-*/.() ]+$/.test(val)) {
-          const calc = Function("return " + val)();
-          if (!isNaN(calc) && isFinite(calc)) e.target.setAttribute("data-result", calc);
-          else e.target.removeAttribute("data-result");
-        } else {
-          e.target.removeAttribute("data-result");
-        }
-      } catch {
-        e.target.removeAttribute("data-result");
-      }
-    });
-    amtInp.addEventListener("blur", (e) => {
-      const res = e.target.getAttribute("data-result");
-      if (res !== null && res !== undefined) {
-        const n = Number(res);
-        e.target.value = Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
-      }
-    });
-
-    /* --- Export PDF --- */
-    async function exportPDF(){
-      try{
-        const combined = (entriesIn||[]).concat(entriesOut||[]);
-        if(!combined || combined.length === 0){ alert('No entries to export'); return; }
-        const print = document.getElementById('printArea');
-        print.innerHTML = '';
-        const container = document.createElement('div');
-        container.style.width = '720px';
-        container.style.background = '#ffffff';
-        container.style.padding = '18px';
-        container.style.border = '4px solid #1e6bf0';
-        container.style.borderRadius = '8px';
-        container.style.boxSizing = 'border-box';
-        container.style.color = '#111';
-        container.style.fontFamily = 'Arial, Helvetica, sans-serif';
-        container.style.fontSize = '12px';
-
-        const header = document.createElement('div');
-        header.style.display='flex';
-        header.style.justifyContent='space-between';
-        header.style.alignItems='flex-start';
-        header.style.marginBottom='12px';
-        const userName = currentUser ? currentUser.displayName : '';
-        const genDate = new Date().toLocaleString();
-        header.innerHTML = `<div style="display:flex;align-items:center;gap:12px">
-          <svg width="120" height="40" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-            <g transform="translate(6,6)">
-              <text x="0" y="18" font-family="Inter, Arial" font-size="18" font-weight="700" fill="#0b3db8">HISAB</text>
-              <text x="0" y="40" font-family="Inter, Arial" font-size="18" font-weight="700" fill="#0b3db8">PREM</text>
-            </g>
-          </svg>
-        </div>
-        <div style="text-align:right;max-width:340px;word-break:break-word">
-          <div style="font-weight:800;color:#0b3db8;font-size:16px">Account Statement</div>
-          ${userName ? `<div style="font-size:12px;color:#333;margin-top:4px">User: ${escapeHtml(userName)}</div>` : ''}
-          <div style="font-size:11px;color:#333;margin-top:4px">Generated: ${genDate}</div>
-        </div>`;
-        container.appendChild(header);
-
-        const inTotal = entriesIn.reduce((s,x)=>s+Number(x.amount||0),0);
-        const outTotal = entriesOut.reduce((s,x)=>s+Number(x.amount||0),0);
-        const balance = inTotal - outTotal;
-        const summary = document.createElement('div');
-        summary.style.display='flex';
-        summary.style.gap='10px';
-        summary.style.marginBottom='12px';
-        summary.innerHTML = `<div style="flex:1;padding:10px;background:#f7f9ff;border-radius:6px;border:1px solid #eef7ff;text-align:center"><div style="font-size:12px;color:#444">Cash In</div><div style="font-weight:700;margin-top:6px;color:#111">₹${inTotal.toLocaleString()}</div></div>
-          <div style="flex:1;padding:10px;background:#fff7f7;border-radius:6px;border:1px solid #fff0f0;text-align:center"><div style="font-size:12px;color:#444">Cash Out</div><div style="font-weight:700;margin-top:6px;color:#111">₹${outTotal.toLocaleString()}</div></div>
-          <div style="flex:1;padding:10px;background:#f7fbff;border-radius:6px;border:1px solid #eaf4ff;text-align:center"><div style="font-size:12px;color:#444">Balance</div><div style="font-weight:700;margin-top:6px;color:#111">₹${balance.toLocaleString()}</div></div>`;
-        container.appendChild(summary);
-
-        try{
-          const canvas = document.getElementById('chartSmall');
-          if(canvas){
-            const img = new Image();
-            img.src = canvas.toDataURL('image/png');
-            img.style.width='100px';
-            img.style.height='100px';
-            img.style.display='block';
-            img.style.objectFit='contain';
-            img.style.margin='0 auto 8px';
-            container.appendChild(img);
-            const legend = document.createElement('div');
-            legend.style.display='flex';
-            legend.style.justifyContent='center';
-            legend.style.gap='20px';
-            legend.style.marginBottom='8px';
-            legend.innerHTML = `<div style="display:flex;align-items:center;gap:6px;font-size:13px"><span style="width:14px;height:14px;border-radius:50%;background:#24c28b;display:inline-block"></span> Cash In</div>
-                                <div style="display:flex;align-items:center;gap:6px;font-size:13px"><span style="width:14px;height:14px;border-radius:50%;background:#ff6b6b;display:inline-block"></span> Cash Out</div>`;
-            container.appendChild(legend);
-          }
-        }catch(e){ console.warn('chart capture', e); }
-
-        const table = document.createElement('table');
-        table.style.width='100%';
-        table.style.borderCollapse='collapse';
-        table.style.fontSize='12px';
-        table.style.marginTop='12px';
-        table.innerHTML = `<thead><tr style="background:#f0f6ff"><th style="border:1px solid #e6f3ff;padding:6px;text-align:left;width:150px">Date / Time</th><th style="border:1px solid #e6f3ff;padding:6px;text-align:left;width:90px">Type</th><th style="border:1px solid #e6f3ff;padding:6px;text-align:right;width:90px">Amount (₹)</th><th style="border:1px solid #e6f3ff;padding:6px;text-align:left">Note</th></tr></thead>`;
-        const tbody = document.createElement('tbody');
-        const combinedAll = (entriesIn||[]).map(e=>({...e,_type:'Cash In'})).concat((entriesOut||[]).map(e=>({...e,_type:'Cash Out'})));
-        combinedAll.sort((a,b)=>(b.updatedAt||b.id||0)-(a.updatedAt||a.id||0));
-        combinedAll.forEach(r=>{
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td style="border:1px solid #eef7ff;padding:6px;color:#111;vertical-align:top">${escapeHtml(r.date||nowStr(r.updatedAt))}</td>
-            <td style="border:1px solid #eef7ff;padding:6px;color:#111;vertical-align:top">${r._type}</td>
-            <td style="border:1px solid #eef7ff;padding:6px;color:#111;text-align:right;vertical-align:top">₹${Number(r.amount).toLocaleString()}</td>
-            <td style="border:1px solid #eef7ff;padding:6px;color:#111;vertical-align:top;white-space:normal;word-break:break-word;max-width:420px">${escapeHtml(r.note||'')}</td>`;
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-        container.appendChild(table);
-
-        const footer = document.createElement('div');
-        footer.style.fontSize='11px';
-        footer.style.color='#666';
-        footer.style.marginTop='12px';
-        footer.style.textAlign='center';
-        footer.textContent = 'Generated by HISAB PREM — Firebase Cloud Version.';
-        container.appendChild(footer);
-
-        print.appendChild(container);
-        print.style.display='block';
-        print.style.padding='12px';
-        print.style.background='#ffffff';
-
-        const opt = {
-          margin: [8,8,8,8],
-          filename: 'HISAB_PREM_Statement.pdf',
-          image: { type:'jpeg', quality:0.98 },
-          html2canvas: { scale:2, useCORS:true, allowTaint:true },
-          jsPDF: { unit:'mm', format:'a4', orientation:'portrait' }
-        };
-        await html2pdf().set(opt).from(container).save();
-        print.style.display='none';
-        print.innerHTML='';
-      }catch(err){
-        console.error('exportPDF error', err);
-        alert('PDF export failed. Check console.');
-      }
-    }
-
-    /* --- Show / hide app vs login --- */
-    function showApp(user){
-      currentUser = user;
-      qs('#loginScreen').classList.remove('show');
-      qs('#appbar').style.display='flex';
-      qs('#appMain').style.display='block';
-      fab.classList.remove('hidden');
-
-      // Update user profile in appbar
-      const profileEl = qs('#userProfile');
-      const firstName = user.displayName ? user.displayName.split(' ')[0] : 'User';
-      profileEl.innerHTML = `
-        ${user.photoURL ? `<img src="${user.photoURL}" class="user-img" alt="avatar" referrerpolicy="no-referrer">` : ''}
-        <span class="user-name">${escapeHtml(firstName)}</span>
-        <button class="logout-btn" onclick="handleLogout()">Logout</button>
-      `;
-
-      // Update collection info
-      qs('#collectionInfo').textContent = `Logged in as: ${escapeHtml(user.email||user.displayName)}`;
-
-      // Load local cache first for instant display
-      loadLocal();
+  unsubIn = userCol('in').orderBy('updatedAt','desc')
+    .onSnapshot({includeMetadataChanges:true}, snap=>{
+      if(snap.metadata.hasPendingWrites) return;
+      const seen=new Set();
+      entriesIn=snap.docs.map(d=>({...d.data(),id:d.id})).filter(e=>seen.has(e.id)?false:seen.add(e.id));
+      saveLocal(); inReady=true;
+      if(outReady) updateUI(snap.metadata.fromCache);
       renderAll();
+    }, err=>{ setSyncStatus('🔴 Offline','var(--red)'); loadLocal(); renderAll(); });
 
-      // Then subscribe to Firestore live data
-      subscribeFirestore();
-    }
+  unsubOut = userCol('out').orderBy('updatedAt','desc')
+    .onSnapshot({includeMetadataChanges:true}, snap=>{
+      if(snap.metadata.hasPendingWrites) return;
+      const seen=new Set();
+      entriesOut=snap.docs.map(d=>({...d.data(),id:d.id})).filter(e=>seen.has(e.id)?false:seen.add(e.id));
+      saveLocal(); outReady=true;
+      if(inReady) updateUI(snap.metadata.fromCache);
+      renderAll();
+    }, err=>{});
+}
 
-    function showLogin(){
-      currentUser = null;
-      if(unsubscribeIn){ unsubscribeIn(); unsubscribeIn=null; }
-      if(unsubscribeOut){ unsubscribeOut(); unsubscribeOut=null; }
-      qs('#loginScreen').classList.add('show');
-      qs('#appbar').style.display='none';
-      qs('#appMain').style.display='none';
-      fab.classList.add('hidden');
-    }
+function setSyncStatus(txt,color){
+  const el=qs('#syncStatus');
+  el.textContent=txt;
+  el.style.color=color;
+}
 
-    /* --- Auth Actions --- */
-    // Detect WebView (APK)
-    const isWebView = /wv|WebView/.test(navigator.userAgent) || 
-                      ((/Android/.test(navigator.userAgent)) && !/Chrome\/[0-9]/.test(navigator.userAgent)) ||
-                      window.Android !== undefined;
+/* ── Render ── */
+function tileHTML(e){
+  const cls=e.type==='out'?'out':'in';
+  return `<div class="tile ${cls}" data-id="${e.id}">
+    <div class="tileLeft">
+      <div class="tileAmt">₹${fmt(e.amount||0)}</div>
+      <div class="tileNote">${escHtml(e.note)||'&nbsp;'}</div>
+      <div class="tileMeta">${escHtml(e.date||nowStr())}</div>
+    </div>
+    <div class="tileActions">
+      <button class="iconBtn" onclick="openEdit('${e.id}','${e.type}')">
+        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="iconBtn" onclick="deleteEntry('${e.id}','${e.type}')">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18" stroke-linecap="round"/><path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>`;
+}
 
-    qs('#googleLoginBtn').addEventListener('click', ()=>{
-      const errEl = qs('#loginError');
-      errEl.style.display='none';
-      qs('#googleLoginBtn').textContent = 'Signing in...';
-      qs('#googleLoginBtn').disabled = true;
+function renderLists(){
+  qs('#listIn').innerHTML = entriesIn.length ? entriesIn.map(tileHTML).join('') : '<div style="color:var(--muted);padding:12px">Koi entry nahi</div>';
+  qs('#listOut').innerHTML = entriesOut.length ? entriesOut.map(tileHTML).join('') : '<div style="color:var(--muted);padding:12px">Koi entry nahi</div>';
+}
 
-      if(isWebView){
-        // WebView/APK: use redirect (popup blocked by Google in WebView)
-        auth.signInWithRedirect(provider).catch(err=>{
-          errEl.textContent = 'Login failed: ' + err.message;
-          errEl.style.display='block';
-          qs('#googleLoginBtn').innerHTML = `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.9 29.5 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.7-.2-3.3-.9-4.9z"/><path fill="#FF3D00" d="M6.3 15.2l6.6 4.8C14.7 16.2 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 7.4 29.5 5 24 5 16.3 5 9.6 9.2 6.3 15.2z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.1 36.5 26.6 37.5 24 37.5c-5.2 0-9.6-3.4-11.2-8H6.4C9.7 39.1 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.2C41.2 35.6 44.5 31 44.5 25c0-1.7-.3-3.3-.9-4.9z"/></svg> Sign in with Google`;
-          qs('#googleLoginBtn').disabled = false;
-          console.error('Login error', err);
-        });
+function renderSummary(){
+  const tIn=entriesIn.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const tOut=entriesOut.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  qs('#sumIn').textContent='₹'+fmt(tIn);
+  qs('#sumOut').textContent='₹'+fmt(tOut);
+  qs('#sumBal').textContent='₹'+fmt(tIn-tOut);
+  qs('#balanceAmt').textContent='₹'+fmt(tIn-tOut);
+  const tot=(tIn+tOut)||1;
+  qs('#ratioIn').style.width=Math.round((tIn/tot)*100)+'%';
+  qs('#ratioOut').style.width=Math.round((tOut/tot)*100)+'%';
+}
+
+function renderChart(){
+  try{
+    const ctx=qs('#chartSmall').getContext('2d');
+    const tIn=entriesIn.reduce((s,x)=>s+(Number(x.amount)||0),0);
+    const tOut=entriesOut.reduce((s,x)=>s+(Number(x.amount)||0),0);
+    if(window._donut) window._donut.destroy();
+    window._donut=new Chart(ctx,{
+      type:'doughnut',
+      data:{labels:['Cash In','Cash Out'],datasets:[{data:[tIn,tOut],backgroundColor:['#24c28b','#ff6b6b']}]},
+      options:{responsive:false,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false}}}
+    });
+  }catch(e){}
+}
+
+function renderAll(){ renderSummary(); renderLists(); renderChart(); }
+
+/* ── Modal ── */
+function openAdd(type='in'){
+  editingItem=null;
+  qs('#modalTitle').textContent='Add Entry';
+  qs('#typeSel').value=type;
+  qs('#amtInp').value='';
+  qs('#noteInp').value='';
+  qs('#amtInp').removeAttribute('data-result');
+  qs('#modalAdd').classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>qs('#amtInp').focus(),80);
+}
+
+function openEdit(id,type){
+  const list=type==='in'?entriesIn:entriesOut;
+  const e=list.find(x=>String(x.id)===String(id));
+  if(!e) return;
+  editingItem={id:e.id,type};
+  qs('#modalTitle').textContent='Edit Entry';
+  qs('#typeSel').value=type;
+  qs('#amtInp').value=String(e.amount||'');
+  qs('#noteInp').value=e.note||'';
+  qs('#modalAdd').classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>qs('#amtInp').focus(),80);
+}
+
+function closeModal(){
+  qs('#modalAdd').classList.remove('open');
+  editingItem=null;
+  document.body.style.overflow='';
+}
+
+async function saveEntry(){
+  let amtVal=qs('#amtInp').value||'';
+  const dr=qs('#amtInp').getAttribute('data-result');
+  if(dr) amtVal=dr;
+  const amt=safeNum(amtVal);
+  const note=(qs('#noteInp').value||'').trim();
+  const type=qs('#typeSel').value==='out'?'out':'in';
+  if(!amt||amt<=0){qs('#amtInp').focus();return;}
+
+  const saveBtn=qs('#saveBtn');
+  saveBtn.disabled=true; saveBtn.textContent='Saving...';
+
+  const now=Date.now();
+  try{
+    if(editingItem){
+      const oldList=editingItem.type==='in'?entriesIn:entriesOut;
+      const old=oldList.find(x=>String(x.id)===String(editingItem.id));
+      const obj={amount:amt,note,date:old?old.date:nowStr(now),updatedAt:now,type};
+      if(editingItem.type!==type){
+        const batch=db.batch();
+        batch.delete(userCol(editingItem.type).doc(String(editingItem.id)));
+        batch.set(userCol(type).doc(),obj);
+        await batch.commit();
       } else {
-        // Browser: use popup (faster UX)
-        auth.signInWithPopup(provider).catch(err=>{
-          errEl.textContent = 'Login failed: ' + err.message;
-          errEl.style.display='block';
-          qs('#googleLoginBtn').innerHTML = `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.9 29.5 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.7-.2-3.3-.9-4.9z"/><path fill="#FF3D00" d="M6.3 15.2l6.6 4.8C14.7 16.2 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 7.4 29.5 5 24 5 16.3 5 9.6 9.2 6.3 15.2z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.1 36.5 26.6 37.5 24 37.5c-5.2 0-9.6-3.4-11.2-8H6.4C9.7 39.1 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.2C41.2 35.6 44.5 31 44.5 25c0-1.7-.3-3.3-.9-4.9z"/></svg> Sign in with Google`;
-          qs('#googleLoginBtn').disabled = false;
-          console.error('Login error', err);
-        });
+        await userCol(type).doc(String(editingItem.id)).set(obj);
       }
-    });
+    } else {
+      await userCol(type).add({amount:amt,note,date:nowStr(now),updatedAt:now,type});
+    }
+    setSyncStatus('🟢 Saved','var(--green)');
+  }catch(err){
+    // Offline fallback
+    if(editingItem){
+      const oldList=editingItem.type==='in'?entriesIn:entriesOut;
+      const old=oldList.find(x=>String(x.id)===String(editingItem.id));
+      const obj={amount:amt,note,date:old?old.date:nowStr(now),updatedAt:now,type,id:editingItem.id};
+      if(editingItem.type==='in') entriesIn=entriesIn.filter(x=>String(x.id)!==String(editingItem.id));
+      else entriesOut=entriesOut.filter(x=>String(x.id)!==String(editingItem.id));
+      if(type==='in') entriesIn.unshift(obj); else entriesOut.unshift(obj);
+    } else {
+      const obj={amount:amt,note,date:nowStr(now),updatedAt:now,type,id:String(now)};
+      if(type==='in') entriesIn.unshift(obj); else entriesOut.unshift(obj);
+    }
+    saveLocal(); renderAll();
+    setSyncStatus('🔴 Offline','var(--red)');
+  }
+  saveBtn.disabled=false; saveBtn.textContent='Save';
+  closeModal();
+}
 
-    // Handle redirect result when app loads (for WebView after redirect)
-    auth.getRedirectResult().then(result => {
-      if(result && result.user){
-        console.log('Redirect login success:', result.user.displayName);
-      }
-    }).catch(err => {
-      if(err.code !== 'auth/no-auth-event'){
-        console.error('Redirect result error', err);
-        const errEl = qs('#loginError');
-        if(errEl){ errEl.textContent = 'Login failed: ' + err.message; errEl.style.display='block'; }
-      }
-    });
+async function deleteEntry(id,type){
+  if(!confirm('Delete karein?')) return;
+  try{
+    await userCol(type).doc(String(id)).delete();
+    setSyncStatus('🟢 Deleted','var(--green)');
+  }catch(err){
+    if(type==='in') entriesIn=entriesIn.filter(x=>String(x.id)!==String(id));
+    else entriesOut=entriesOut.filter(x=>String(x.id)!==String(id));
+    saveLocal(); renderAll();
+  }
+}
 
-    window.handleLogout = function(){
-      auth.signOut().then(()=>{ showLogin(); }).catch(e=> console.error('logout', e));
-    };
+/* ── Amount field ── */
+qs('#amtInp').addEventListener('keydown',e=>{
+  const ok=['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','Home','End'];
+  if(ok.includes(e.key)) return;
+  if((e.ctrlKey||e.metaKey)&&['a','c','v','x'].includes(e.key.toLowerCase())) return;
+  if(!/^[0-9+\-*\/.()\s]$/.test(e.key)) e.preventDefault();
+});
+qs('#amtInp').addEventListener('input',e=>{
+  const cleaned=e.target.value.replace(/[^0-9+\-*\/.()\s]/g,'');
+  if(cleaned!==e.target.value) e.target.value=cleaned;
+  try{
+    if(/^[0-9+\-*/.() ]+$/.test(cleaned)){
+      const r=Function('return '+cleaned)();
+      if(isFinite(r)) e.target.setAttribute('data-result',r);
+      else e.target.removeAttribute('data-result');
+    } else e.target.removeAttribute('data-result');
+  }catch{e.target.removeAttribute('data-result');}
+});
+qs('#amtInp').addEventListener('blur',e=>{
+  const r=e.target.getAttribute('data-result');
+  if(r){ const n=Number(r); e.target.value=Number.isInteger(n)?String(n):String(Math.round(n*100)/100); }
+});
 
-    /* --- Firebase Auth State --- */
-    auth.onAuthStateChanged(user=>{
-      if(user){ showApp(user); }
-      else { showLogin(); }
-    });
+/* ── Navigate ── */
+window.navigate=function(p){
+  if(p==='out'){
+    qs('#page-in').classList.add('hidden');
+    qs('#page-out').classList.remove('hidden');
+  } else {
+    qs('#page-out').classList.add('hidden');
+    qs('#page-in').classList.remove('hidden');
+  }
+};
 
-    /* --- Navigate --- */
-    window.navigate = function(p){
-      if(p==='out'){
-        qs('#page-in').classList.add('hidden');
-        qs('#page-out').classList.remove('hidden');
-      } else {
-        qs('#page-out').classList.add('hidden');
-        qs('#page-in').classList.remove('hidden');
-      }
-    };
+/* ── Show/Hide App ── */
+function showApp(user){
+  currentUser=user;
+  qs('#loginScreen').classList.remove('show');
+  qs('#appbar').classList.add('show');
+  qs('#appMain').classList.add('show');
+  qs('#fabAdd').classList.add('show');
+  qs('#userName').textContent=user.phoneNumber||'User';
+  qs('#collectionInfo').textContent=user.phoneNumber||'';
+  loadLocal(); renderAll();
+  subscribeFirestore();
+}
 
-    /* --- UI Bindings --- */
-    window.openEdit = openEdit;
-    window.deleteEntry = deleteEntry;
-    window.hisabExportPDF = exportPDF;
+function showLogin(){
+  currentUser=null;
+  if(unsubIn){unsubIn();unsubIn=null;}
+  if(unsubOut){unsubOut();unsubOut=null;}
+  qs('#loginScreen').classList.add('show');
+  qs('#appbar').classList.remove('show');
+  qs('#appMain').classList.remove('show');
+  qs('#fabAdd').classList.remove('show');
+  // Reset login form
+  qs('#step1').classList.add('active');
+  qs('#step2').classList.remove('active');
+  qs('#phoneInp').value='';
+  qs('#phoneErr').textContent='';
+}
 
-    fab.addEventListener('click', ()=> openAdd('in'));
-    btnQuickIn.addEventListener('click', ()=> navigate('in'));
-    btnQuickOut.addEventListener('click', ()=> navigate('out'));
-    cancelBtn.addEventListener('click', closeModal);
-    saveBtn.addEventListener('click', async ()=>{ await saveEntry(); });
-    modal.addEventListener('click', (ev)=>{ if(ev.target===modal) closeModal(); });
-    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
-    if(exportBtn) exportBtn.addEventListener('click', exportPDF);
+window.handleLogout=function(){
+  auth.signOut().then(()=>showLogin()).catch(()=>{});
+};
 
-    window.addEventListener('online', ()=>{ 
-      syncStatusEl.textContent='🔄 Reconnecting...'; 
-      syncStatusEl.style.color='var(--muted)';
-      if(currentUser) subscribeFirestore(); 
-    });
-    window.addEventListener('offline', ()=>{ 
-      syncStatusEl.textContent='🔴 Offline'; 
-      syncStatusEl.style.color='var(--red)';
-    });
+/* ── OTP Boxes auto-focus ── */
+const otpBoxes=qsa('.otpBox');
+otpBoxes.forEach((box,i)=>{
+  box.addEventListener('input',e=>{
+    // Only numbers
+    e.target.value=e.target.value.replace(/\D/g,'');
+    if(e.target.value && i<otpBoxes.length-1) otpBoxes[i+1].focus();
+  });
+  box.addEventListener('keydown',e=>{
+    if(e.key==='Backspace'&&!e.target.value&&i>0) otpBoxes[i-1].focus();
+  });
+  box.addEventListener('paste',e=>{
+    e.preventDefault();
+    const text=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'');
+    text.split('').forEach((ch,j)=>{ if(otpBoxes[i+j]) otpBoxes[i+j].value=ch; });
+    const next=Math.min(i+text.length,otpBoxes.length-1);
+    otpBoxes[next].focus();
+  });
+});
 
-  </script>
+function getOTP(){
+  return Array.from(otpBoxes).map(b=>b.value).join('');
+}
+function clearOTP(){
+  otpBoxes.forEach(b=>b.value='');
+  otpBoxes[0].focus();
+}
+
+/* ── Timer ── */
+function startTimer(sec=60){
+  clearInterval(timerInterval);
+  qs('#timerEl').classList.remove('hidden');
+  qs('#resendBtn').classList.add('hidden');
+  qs('#timerCount').textContent=sec;
+  timerInterval=setInterval(()=>{
+    sec--;
+    qs('#timerCount').textContent=sec;
+    if(sec<=0){
+      clearInterval(timerInterval);
+      qs('#timerEl').classList.add('hidden');
+      qs('#resendBtn').classList.remove('hidden');
+    }
+  },1000);
+}
+
+/* ── reCAPTCHA (invisible) ── */
+function setupRecaptcha(){
+  if(window.recaptchaVerifier){
+    try{ window.recaptchaVerifier.clear(); }catch(e){}
+  }
+  qs('#recaptcha-container').innerHTML='';
+  window.recaptchaVerifier=new firebase.auth.RecaptchaVerifier('recaptcha-container',{
+    size:'invisible',
+    callback:()=>{}
+  });
+}
+
+/* ── Send OTP ── */
+qs('#sendOtpBtn').addEventListener('click',async()=>{
+  const phone=qs('#phoneInp').value.trim().replace(/\D/g,'');
+  const code=qs('#countryCode').value.trim()||'+91';
+  const errEl=qs('#phoneErr');
+  errEl.textContent='';
+
+  if(phone.length!==10){ errEl.textContent='Sahi 10-digit number daalo'; return; }
+
+  const fullPhone=code+phone;
+  qs('#sendOtpBtn').disabled=true;
+  qs('#sendOtpBtn').textContent='Bhej raha hoon...';
+
+  try{
+    setupRecaptcha();
+    confirmationResult=await auth.signInWithPhoneNumber(fullPhone,window.recaptchaVerifier);
+    // Show step 2
+    qs('#step1').classList.remove('active');
+    qs('#step2').classList.add('active');
+    qs('#otpSentTo').textContent='OTP bheja: '+fullPhone;
+    startTimer(60);
+    clearOTP();
+  }catch(err){
+    console.error('OTP send error',err);
+    errEl.textContent=getFirebaseErrMsg(err);
+    setupRecaptcha(); // reset
+  }
+  qs('#sendOtpBtn').disabled=false;
+  qs('#sendOtpBtn').textContent='OTP Bhejo 📲';
+});
+
+/* ── Verify OTP ── */
+qs('#verifyOtpBtn').addEventListener('click',async()=>{
+  const otp=getOTP();
+  const errEl=qs('#otpErr');
+  errEl.textContent='';
+  if(otp.length!==6){ errEl.textContent='6-digit OTP daalo'; return; }
+  if(!confirmationResult){ errEl.textContent='Pehle OTP mangao'; return; }
+
+  qs('#verifyOtpBtn').disabled=true;
+  qs('#verifyOtpBtn').textContent='Verify ho raha hai...';
+
+  try{
+    await confirmationResult.confirm(otp);
+    // onAuthStateChanged will fire and showApp()
+  }catch(err){
+    console.error('OTP verify error',err);
+    errEl.textContent=getFirebaseErrMsg(err);
+    qs('#verifyOtpBtn').disabled=false;
+    qs('#verifyOtpBtn').textContent='Verify & Login ✅';
+  }
+});
+
+/* ── Resend OTP ── */
+qs('#resendBtn').addEventListener('click',async()=>{
+  qs('#resendBtn').classList.add('hidden');
+  qs('#otpErr').textContent='';
+  const phone=qs('#phoneInp').value.trim().replace(/\D/g,'');
+  const code=qs('#countryCode').value.trim()||'+91';
+  const fullPhone=code+phone;
+  try{
+    setupRecaptcha();
+    confirmationResult=await auth.signInWithPhoneNumber(fullPhone,window.recaptchaVerifier);
+    startTimer(60);
+    clearOTP();
+    qs('#otpErr').textContent='';
+  }catch(err){
+    qs('#otpErr').textContent=getFirebaseErrMsg(err);
+    qs('#resendBtn').classList.remove('hidden');
+  }
+});
+
+/* ── Back button ── */
+qs('#backBtn').addEventListener('click',()=>{
+  clearInterval(timerInterval);
+  qs('#step2').classList.remove('active');
+  qs('#step1').classList.add('active');
+  qs('#phoneErr').textContent='';
+  qs('#otpErr').textContent='';
+});
+
+/* ── Firebase error messages in Hindi ── */
+function getFirebaseErrMsg(err){
+  const code=err.code||'';
+  const msgs={
+    'auth/invalid-phone-number':'Phone number galat hai',
+    'auth/too-many-requests':'Bahut zyada requests. Thodi der baad try karo',
+    'auth/invalid-verification-code':'OTP galat hai. Dobara try karo',
+    'auth/code-expired':'OTP expire ho gaya. Dobara bhejo',
+    'auth/missing-phone-number':'Phone number daalo',
+    'auth/quota-exceeded':'SMS limit khatam. Kal try karo',
+    'auth/captcha-check-failed':'reCAPTCHA failed. Page refresh karo',
+    'auth/network-request-failed':'Internet check karo',
+  };
+  return msgs[code]||('Error: '+err.message);
+}
+
+/* ── Auth State ── */
+auth.onAuthStateChanged(user=>{
+  if(user) showApp(user);
+  else showLogin();
+});
+
+/* ── Export PDF ── */
+async function exportPDF(){
+  const combined=(entriesIn||[]).concat(entriesOut||[]);
+  if(!combined.length){alert('Koi entry nahi');return;}
+  const print=qs('#printArea');
+  print.innerHTML='';
+  const c=document.createElement('div');
+  c.style.cssText='width:720px;background:#fff;padding:18px;border:4px solid #1e6bf0;border-radius:8px;box-sizing:border-box;color:#111;font-family:Arial,sans-serif;font-size:12px';
+  const tIn=entriesIn.reduce((s,x)=>s+Number(x.amount||0),0);
+  const tOut=entriesOut.reduce((s,x)=>s+Number(x.amount||0),0);
+  c.innerHTML=`
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:22px;font-weight:800;color:#0b3db8">HISAB PREM</div>
+      <div style="text-align:right"><div style="font-weight:700;color:#0b3db8">Account Statement</div>
+      <div style="font-size:11px;color:#333">${currentUser?currentUser.phoneNumber:''}</div>
+      <div style="font-size:11px;color:#333">${new Date().toLocaleString('en-IN')}</div></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <div style="flex:1;padding:10px;background:#f7fff7;border:1px solid #c8f5e0;border-radius:6px;text-align:center"><div style="font-size:11px;color:#444">Cash In</div><div style="font-weight:700">₹${tIn.toLocaleString('en-IN')}</div></div>
+      <div style="flex:1;padding:10px;background:#fff7f7;border:1px solid #ffd0d0;border-radius:6px;text-align:center"><div style="font-size:11px;color:#444">Cash Out</div><div style="font-weight:700">₹${tOut.toLocaleString('en-IN')}</div></div>
+      <div style="flex:1;padding:10px;background:#f0f6ff;border:1px solid #cce0ff;border-radius:6px;text-align:center"><div style="font-size:11px;color:#444">Balance</div><div style="font-weight:700">₹${(tIn-tOut).toLocaleString('en-IN')}</div></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#f0f6ff">
+        <th style="border:1px solid #dde;padding:6px;text-align:left">Date</th>
+        <th style="border:1px solid #dde;padding:6px;text-align:left">Type</th>
+        <th style="border:1px solid #dde;padding:6px;text-align:right">Amount</th>
+        <th style="border:1px solid #dde;padding:6px;text-align:left">Note</th>
+      </tr></thead>
+      <tbody>${
+        [...(entriesIn||[]).map(e=>({...e,_t:'Cash In'})),...(entriesOut||[]).map(e=>({...e,_t:'Cash Out'}))]
+        .sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))
+        .map(r=>`<tr>
+          <td style="border:1px solid #eef;padding:6px">${escHtml(r.date)}</td>
+          <td style="border:1px solid #eef;padding:6px">${r._t}</td>
+          <td style="border:1px solid #eef;padding:6px;text-align:right">₹${Number(r.amount).toLocaleString('en-IN')}</td>
+          <td style="border:1px solid #eef;padding:6px">${escHtml(r.note||'')}</td>
+        </tr>`).join('')
+      }</tbody>
+    </table>
+    <div style="margin-top:12px;font-size:11px;color:#666;text-align:center">Generated by HISAB PREM</div>`;
+  print.appendChild(c);
+  print.style.display='block';
+  await html2pdf().set({margin:[8,8,8,8],filename:'HISAB_PREM.pdf',html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(c).save();
+  print.style.display='none';
+  print.innerHTML='';
+}
+
+/* ── Live time ── */
+function tickTime(){ qs('#appTime').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:true}); }
+setInterval(tickTime,1000); tickTime();
+
+/* ── UI Bindings ── */
+window.openEdit=openEdit;
+window.deleteEntry=deleteEntry;
+
+qs('#fabAdd').addEventListener('click',()=>openAdd('in'));
+qs('#btnQuickIn').addEventListener('click',()=>navigate('in'));
+qs('#btnQuickOut').addEventListener('click',()=>navigate('out'));
+qs('#cancelBtn').addEventListener('click',closeModal);
+qs('#saveBtn').addEventListener('click',saveEntry);
+qs('#modalAdd').addEventListener('click',e=>{ if(e.target===qs('#modalAdd')) closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+qs('#exportBtn').addEventListener('click',exportPDF);
+
+window.addEventListener('online',()=>{ if(currentUser) subscribeFirestore(); });
+window.addEventListener('offline',()=>setSyncStatus('🔴 Offline','var(--red)'));
+
+/* Phone input — only numbers */
+qs('#phoneInp').addEventListener('input',e=>{
+  e.target.value=e.target.value.replace(/\D/g,'');
+});
+</script>
 </body>
 </html>
