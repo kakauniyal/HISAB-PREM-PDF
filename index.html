@@ -31,34 +31,53 @@
     html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#041018);color:var(--text);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 
     /* ── LOGIN ── */
-    /* ── NEW LOGIN STYLES ── */
+    /* ── LOGIN STYLES ── */
+    /* SPLASH */
+    #splashScreen{display:none;position:fixed;inset:0;z-index:600;background:#0A0F1A;align-items:center;justify-content:center;flex-direction:column}
+    #splashScreen.show{display:flex}
+    #splashScreen::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(201,168,76,0.07) 0%,transparent 70%)}
+    .splashLogo{width:160px;height:160px;border-radius:50%;object-fit:cover;animation:splashPop 0.7s cubic-bezier(0.16,1,0.3,1) both;box-shadow:0 0 0 3px rgba(201,168,76,0.3),0 0 40px rgba(201,168,76,0.2),0 20px 60px rgba(0,0,0,0.5)}
+    .splashName{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:900;letter-spacing:3px;margin-top:22px;background:linear-gradient(135deg,#F0EDE8 30%,#E8C97A 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:fadeUp 0.7s 0.2s both}
+    .splashSub{font-size:0.7rem;color:#8A9BB0;letter-spacing:5px;text-transform:uppercase;margin-top:6px;animation:fadeUp 0.7s 0.3s both}
+    .splashDots{display:flex;gap:8px;margin-top:36px;animation:fadeUp 0.7s 0.4s both}
+    .splashDot{width:7px;height:7px;border-radius:50%;background:#C9A84C;opacity:0.3;animation:dotPulse 1.2s ease-in-out infinite}
+    .splashDot:nth-child(2){animation-delay:0.2s}
+    .splashDot:nth-child(3){animation-delay:0.4s}
+    @keyframes dotPulse{0%,100%{opacity:0.3;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+    @keyframes splashPop{from{opacity:0;transform:scale(0.75)}to{opacity:1;transform:scale(1)}}
+
     #loginScreen{display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;background:#0A0F1A;overflow:hidden}
     #loginScreen.show{display:flex}
     #loginScreen::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 20% 20%,rgba(201,168,76,0.08) 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 80% 80%,rgba(201,168,76,0.05) 0%,transparent 60%)}
     #loginScreen::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(201,168,76,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
-    .loginWrap{position:relative;z-index:10;width:100%;max-width:420px;padding:20px;animation:fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) both}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
-    .loginCard{background:linear-gradient(135deg,rgba(26,36,54,0.95) 0%,rgba(17,24,39,0.98) 100%);border:1px solid rgba(201,168,76,0.2);border-radius:24px;padding:48px 36px;backdrop-filter:blur(20px);box-shadow:0 0 0 1px rgba(201,168,76,0.05),0 40px 80px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.05);position:relative;overflow:hidden}
-    .loginCard::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,#C9A84C,transparent);animation:shimmer 3s ease-in-out infinite}
-    @keyframes shimmer{0%,100%{opacity:0.4}50%{opacity:1}}
-    .loginCard::after{content:'';position:absolute;top:24px;right:24px;width:60px;height:60px;border-top:1px solid rgba(201,168,76,0.3);border-right:1px solid rgba(201,168,76,0.3);border-radius:0 8px 0 0}
-    .corner-bl{position:absolute;bottom:24px;left:24px;width:60px;height:60px;border-bottom:1px solid rgba(201,168,76,0.3);border-left:1px solid rgba(201,168,76,0.3);border-radius:0 0 0 8px}
-    .logo-area{text-align:center;margin-bottom:32px}
-    .logo-icon{width:64px;height:64px;margin:0 auto 18px;background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));border:1px solid rgba(201,168,76,0.3);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#E8C97A;animation:iconPulse 2s ease-in-out infinite}
-    @keyframes iconPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0)}50%{box-shadow:0 0 20px 4px rgba(201,168,76,0.1)}}
-    .logo-title{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;letter-spacing:2px;line-height:1;margin-bottom:8px;background:linear-gradient(135deg,#F0EDE8 30%,#E8C97A 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .logo-sub{font-size:0.8rem;color:#8A9BB0;letter-spacing:3px;text-transform:uppercase}
-    .tagline-box{text-align:center;padding:14px 18px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.1);border-radius:12px;margin-bottom:24px}
-    .tagline-text{font-size:0.85rem;color:#8A9BB0;line-height:1.6}
-    .tagline-text strong{color:#E8C97A;font-weight:500}
-    #googleLoginBtn{width:100%;padding:16px 24px;border:1px solid rgba(255,255,255,0.12);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;background:rgba(255,255,255,0.06);color:#F0EDE8;transition:all 0.3s cubic-bezier(0.16,1,0.3,1)}
-    #googleLoginBtn:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+    .loginWrap{position:relative;z-index:10;width:100%;max-width:400px;padding:20px;animation:fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    .loginCard{background:linear-gradient(160deg,rgba(18,26,44,0.99) 0%,rgba(10,15,26,1) 100%);border:1px solid rgba(201,168,76,0.18);border-radius:28px;padding:36px 28px 32px;box-shadow:0 0 0 1px rgba(201,168,76,0.04),0 40px 80px rgba(0,0,0,0.8),inset 0 1px 0 rgba(255,255,255,0.03);position:relative;overflow:hidden}
+    .loginCard::before{content:'';position:absolute;top:-1px;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,#C9A84C,transparent);animation:shimmer 3s ease-in-out infinite}
+    @keyframes shimmer{0%,100%{opacity:0.3}50%{opacity:1}}
+    .loginCard::after{content:'';position:absolute;top:20px;right:20px;width:50px;height:50px;border-top:1px solid rgba(201,168,76,0.25);border-right:1px solid rgba(201,168,76,0.25);border-radius:0 10px 0 0}
+    .corner-bl{position:absolute;bottom:20px;left:20px;width:50px;height:50px;border-bottom:1px solid rgba(201,168,76,0.25);border-left:1px solid rgba(201,168,76,0.25);border-radius:0 0 0 10px}
+
+    /* App icon in login */
+    .login-app-icon{width:86px;height:86px;border-radius:50%;object-fit:cover;margin:0 auto 14px;display:block;box-shadow:0 0 0 2px rgba(201,168,76,0.25),0 8px 28px rgba(0,0,0,0.5)}
+    .logo-title{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;letter-spacing:2px;text-align:center;background:linear-gradient(135deg,#F0EDE8 30%,#E8C97A 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+    .logo-sub{font-size:0.72rem;color:#8A9BB0;letter-spacing:4px;text-transform:uppercase;text-align:center;margin-bottom:28px}
+
+    /* Divider */
+    .login-divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+    .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:rgba(201,168,76,0.15)}
+    .login-divider span{font-size:0.75rem;color:#8A9BB0;letter-spacing:1px}
+
+    #googleLoginBtn{width:100%;padding:15px 20px;border:1px solid rgba(201,168,76,0.2);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;background:rgba(201,168,76,0.06);color:#F0EDE8;transition:all 0.3s ease;letter-spacing:0.3px}
+    #googleLoginBtn:hover{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.35);transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+    #googleLoginBtn:active{transform:translateY(0)}
     #googleLoginBtn svg{width:20px;height:20px;flex-shrink:0}
-    .login-features{display:flex;justify-content:center;gap:24px;margin-top:24px}
-    .lf-item{display:flex;flex-direction:column;align-items:center;gap:4px}
-    .lf-icon{font-size:16px;opacity:0.7}
-    .lf-label{font-size:0.65rem;color:#8A9BB0;letter-spacing:0.5px;opacity:0.6;text-transform:uppercase}
-    .loginErr{color:var(--red);font-size:12px;margin-top:12px;min-height:16px;text-align:center}
+
+    .login-features{display:flex;justify-content:center;gap:20px;margin-top:24px;padding-top:20px;border-top:1px solid rgba(201,168,76,0.08)}
+    .lf-item{display:flex;flex-direction:column;align-items:center;gap:5px}
+    .lf-icon{font-size:18px}
+    .lf-label{font-size:0.6rem;color:#8A9BB0;letter-spacing:0.5px;text-transform:uppercase}
+    .loginErr{color:var(--red);font-size:12px;margin-top:10px;min-height:16px;text-align:center}
 
     /* Install banner */
     #installBanner{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),#1e88e5);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:700;z-index:400;box-shadow:0 8px 24px rgba(0,0,0,0.4);cursor:pointer;white-space:nowrap;gap:10px;align-items:center}
@@ -126,19 +145,26 @@
 </head>
 <body>
 
+<!-- SPLASH SCREEN -->
+<div id="splashScreen" class="show">
+  <img class="splashLogo" src="./icon-512.png" alt="HISAB PREM" />
+  <div class="splashName">HISAB PREM</div>
+  <div class="splashSub">Personal Finance</div>
+  <div class="splashDots">
+    <div class="splashDot"></div>
+    <div class="splashDot"></div>
+    <div class="splashDot"></div>
+  </div>
+</div>
+
 <!-- LOGIN -->
-<div id="loginScreen" class="show">
+<div id="loginScreen">
   <div class="loginWrap">
     <div class="loginCard">
       <div class="corner-bl"></div>
-      <div class="logo-area">
-        <div class="logo-icon">&#8377;</div>
-        <div class="logo-title">HISAB PREM</div>
-        <div class="logo-sub">Personal Finance</div>
-      </div>
-      <div class="tagline-box">
-        <p class="tagline-text">Apna hisab rakho &mdash; <strong>data safe rahega</strong> &#9729;<br>Smart tracking, zero stress</p>
-      </div>
+      <img class="login-app-icon" src="./icon-192.png" alt="HISAB PREM" />
+      <div class="logo-title">HISAB PREM</div>
+      <div class="logo-sub">Personal Finance</div>
       <button id="googleLoginBtn">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -150,9 +176,9 @@
       </button>
       <div class="login-features">
         <div class="lf-item"><span class="lf-icon">&#128274;</span><span class="lf-label">Secure</span></div>
-        <div class="lf-item"><span class="lf-icon">&#9729;</span><span class="lf-label">Cloud Sync</span></div>
+        <div class="lf-item"><span class="lf-icon">&#9729;</span><span class="lf-label">Cloud</span></div>
         <div class="lf-item"><span class="lf-icon">&#128202;</span><span class="lf-label">Analytics</span></div>
-        <div class="lf-item"><span class="lf-icon">&#128276;</span><span class="lf-label">Offline</span></div>
+        <div class="lf-item"><span class="lf-icon">&#9889;</span><span class="lf-label">Fast</span></div>
       </div>
       <div class="loginErr" id="loginErr"></div>
     </div>
@@ -472,6 +498,7 @@ function showLogin(){
   currentUser=null;
   if(unsubIn){unsubIn();unsubIn=null;}if(unsubOut){unsubOut();unsubOut=null;}
   qs('#loginScreen').classList.add('show');
+  qs('#splashScreen').classList.remove('show');
   qs('#appbar').classList.remove('show');
   qs('#appMain').classList.remove('show');
   qs('#fabAdd').classList.remove('show');
@@ -492,7 +519,13 @@ qs('#googleLoginBtn').addEventListener('click',()=>{
   });
 });
 
-auth.onAuthStateChanged(u=>u?showApp(u):showLogin());
+// Splash screen — show for 2s then show login/app
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('splashScreen').classList.remove('show');
+  }, 2000);
+});
+auth.onAuthStateChanged(u=>u?showApp(u):setTimeout(()=>showLogin(),2000));
 
 /* ══ PWA Install ══ */
 window.addEventListener('beforeinstallprompt',e=>{
