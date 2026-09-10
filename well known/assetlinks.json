@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.kakauniyal.twa",
+      "sha256_cert_fingerprints": [
+        "6F:D3:93:A0:86:EA:70:BE:D7:18:A2:4B:02:4F:55:2B:9D:60:D8:4B:82:42:CF:68:62:FB:DD:ED:B1:18:D7:31"
+      ]
+    }
+  }
+]
