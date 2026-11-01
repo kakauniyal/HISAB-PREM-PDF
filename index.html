@@ -26,14 +26,12 @@
   <style>
     :root{
       --bg:#071117; --accent:#1e6bf0; --green:#24c28b; --red:#ff6b6b; --muted:#98a2a6; --text:#eaf2f5;
-      /* Safe areas (status bar / gesture bar). JS may override --sat if env() returns 0 */
       --sat:env(safe-area-inset-top,0px);
       --sab:env(safe-area-inset-bottom,0px);
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#041018);color:var(--text);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 
-    /* ── LOGIN ── */
     /* SPLASH */
     #splashScreen{display:none;position:fixed;inset:0;z-index:600;background:#0A0F1A;align-items:center;justify-content:center;flex-direction:column}
     #splashScreen.show{display:flex}
@@ -60,12 +58,10 @@
     .loginCard::after{content:'';position:absolute;top:20px;right:20px;width:50px;height:50px;border-top:1px solid rgba(201,168,76,0.25);border-right:1px solid rgba(201,168,76,0.25);border-radius:0 10px 0 0}
     .corner-bl{position:absolute;bottom:20px;left:20px;width:50px;height:50px;border-bottom:1px solid rgba(201,168,76,0.25);border-left:1px solid rgba(201,168,76,0.25);border-radius:0 0 0 10px}
 
-    /* App icon in login */
     .login-app-icon{width:86px;height:86px;border-radius:50%;object-fit:cover;margin:0 auto 14px;display:block;box-shadow:0 0 0 2px rgba(201,168,76,0.25),0 8px 28px rgba(0,0,0,0.5)}
     .logo-title{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;letter-spacing:2px;text-align:center;background:linear-gradient(135deg,#F0EDE8 30%,#E8C97A 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
     .logo-sub{font-size:0.72rem;color:#8A9BB0;letter-spacing:4px;text-transform:uppercase;text-align:center;margin-bottom:28px}
 
-    /* Divider */
     .login-divider{display:flex;align-items:center;gap:12px;margin:20px 0}
     .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:rgba(201,168,76,0.15)}
     .login-divider span{font-size:0.75rem;color:#8A9BB0;letter-spacing:1px}
@@ -81,11 +77,9 @@
     .lf-label{font-size:0.6rem;color:#8A9BB0;letter-spacing:0.5px;text-transform:uppercase}
     .loginErr{color:var(--red);font-size:12px;margin-top:10px;min-height:16px;text-align:center}
 
-    /* Install banner */
     #installBanner{display:none;position:fixed;bottom:calc(80px + var(--sab));left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),#1e88e5);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:700;z-index:400;box-shadow:0 8px 24px rgba(0,0,0,0.4);cursor:pointer;white-space:nowrap;gap:10px;align-items:center}
     #installBanner.show{display:flex}
 
-    /* ── APPBAR ── (FIX: top padding = status bar height) */
     .appbar{display:none;align-items:center;padding:calc(13px + var(--sat)) 16px 13px;background:linear-gradient(135deg,#1a6bda 0%,#1453b5 60%,#0e3f9c 100%);box-shadow:0 4px 20px rgba(14,63,156,0.4);position:sticky;top:0;z-index:100;gap:10px}
     .appbar.show{display:flex}
     .appbar::before{content:'';position:absolute;top:-40%;left:-5%;width:40%;height:200%;background:rgba(255,255,255,0.04);transform:rotate(20deg);pointer-events:none}
@@ -100,12 +94,10 @@
     .logoutBtn{background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);border-radius:20px;color:#fff;cursor:pointer;font-size:11px;padding:5px 13px;font-weight:700;letter-spacing:0.2px;backdrop-filter:blur(4px);transition:background 0.2s}
     .logoutBtn:hover{background:rgba(255,255,255,0.22)}
 
-    /* ── MAIN ── */
     #appMain{display:none}
     #appMain.show{display:block}
     .container{max-width:980px;margin:12px auto;padding:0 12px}
 
-    /* Glassmorphism Card */
     .card{background:linear-gradient(135deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.02) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:20px;padding:18px;box-shadow:0 8px 32px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.08);position:relative;overflow:hidden}
     .card::before{content:'';position:absolute;top:-60px;right:-60px;width:160px;height:160px;background:radial-gradient(circle,rgba(36,194,139,0.10),transparent 70%);pointer-events:none;z-index:0}
     .card::after{content:'';position:absolute;bottom:-40px;left:-40px;width:120px;height:120px;background:radial-gradient(circle,rgba(30,107,240,0.08),transparent 70%);pointer-events:none;z-index:0}
@@ -133,7 +125,6 @@
     .secTitle{margin:16px 0 8px;font-size:15px;font-weight:700;letter-spacing:0.3px}
     .list{display:flex;flex-direction:column;gap:10px;padding-bottom:calc(90px + var(--sab))}
 
-    /* Stylish Tiles */
     .tile{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,#0d1f2d,#091820);box-shadow:0 4px 20px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.04);position:relative;overflow:hidden;transition:transform 0.15s}
     .tile:active{transform:scale(0.98)}
     .tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
@@ -156,11 +147,9 @@
     .iconBtn:active{background:rgba(255,255,255,0.1);color:#fff}
     .iconBtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
 
-    /* FAB (FIX: stays above gesture/nav bar) */
     .fab{position:fixed;right:14px;bottom:calc(16px + var(--sab));width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--green),#13a76b);display:none;align-items:center;justify-content:center;color:#fff;font-size:28px;box-shadow:0 14px 36px rgba(15,50,30,0.4);border:3px solid rgba(255,255,255,0.05);cursor:pointer;z-index:200}
     .fab.show{display:flex}
 
-    /* Success Toast (FIX: below status bar) */
     .toast{position:fixed;top:calc(80px + var(--sat));left:50%;transform:translateX(-50%) translateY(-20px);z-index:500;background:linear-gradient(135deg,rgba(36,194,139,0.15),rgba(36,194,139,0.05));border:1px solid rgba(36,194,139,0.3);backdrop-filter:blur(20px);border-radius:50px;padding:12px 24px;display:flex;align-items:center;gap:10px;opacity:0;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);pointer-events:none;white-space:nowrap}
     .toast.out-toast{background:linear-gradient(135deg,rgba(255,107,107,0.15),rgba(255,107,107,0.05));border-color:rgba(255,107,107,0.3)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -308,10 +297,7 @@
 <div id="printArea" style="display:none"></div>
 
 <script>
-/* ══ Safe-area fallback ══
-   env(safe-area-inset-top) kuch Android devices pe 0 deta hai.
-   Agar app standalone/fullscreen me hai aur env()=0 hai, to status bar height
-   ka estimate (24px) use karte hain taaki header time/signal ke neeche na dabe. */
+/* ══ Safe-area fallback ══ */
 (function(){
   try{
     const p=document.createElement('div');
@@ -324,9 +310,7 @@
                      window.navigator.standalone===true;
     const isAndroid=/Android/i.test(navigator.userAgent);
     if(inset===0&&standalone&&isAndroid){
-      // Agar status bar already alag se space le raha hai to window.screen se pata chalta hai
       const gap=(window.screen.height-window.innerHeight);
-      // Sirf tab fallback lagao jab content sach me status bar ke peeche ho (fullscreen-like)
       if(window.matchMedia('(display-mode: fullscreen)').matches||gap<=0){
         document.documentElement.style.setProperty('--sat','24px');
       }
@@ -389,15 +373,14 @@ function subscribeFS(){
   let inOk=false,outOk=false;
   function ui(fromCache){setSync(fromCache?'🔴 Offline':'🟢 Synced',fromCache?'var(--red)':'var(--green)');}
 
+  /* FIX: hasPendingWrites wali line hata di — ab local update turant screen pe dikhega */
   unsubIn=col('in').orderBy('updatedAt','desc').onSnapshot({includeMetadataChanges:true},snap=>{
-    if(snap.metadata.hasPendingWrites)return;
     const seen=new Set();
     entriesIn=snap.docs.map(d=>({...d.data(),id:d.id})).filter(e=>seen.has(e.id)?false:seen.add(e.id));
     saveLocal();inOk=true;if(outOk)ui(snap.metadata.fromCache);renderAll();
   },()=>{setSync('🔴 Offline','var(--red)');loadLocal();renderAll();});
 
   unsubOut=col('out').orderBy('updatedAt','desc').onSnapshot({includeMetadataChanges:true},snap=>{
-    if(snap.metadata.hasPendingWrites)return;
     const seen=new Set();
     entriesOut=snap.docs.map(d=>({...d.data(),id:d.id})).filter(e=>seen.has(e.id)?false:seen.add(e.id));
     saveLocal();outOk=true;if(inOk)ui(snap.metadata.fromCache);renderAll();
@@ -477,7 +460,9 @@ function openEdit(id,type){
 }
 function closeModal(){qs('#modalAdd').classList.remove('open');editingItem=null;document.body.style.overflow='';}
 
-async function saveEntry(){
+/* FIX: await hata diya — Firestore local cache turant UI update karta hai,
+   server confirm ka wait nahi hota. Error aaye to sirf status badalta hai. */
+function saveEntry(){
   let av=qs('#amtInp').value||'';
   const dr=qs('#amtInp').getAttribute('data-result');
   if(dr)av=dr;
@@ -485,49 +470,38 @@ async function saveEntry(){
   const note=(qs('#noteInp').value||'').trim();
   const type=qs('#typeSel').value==='out'?'out':'in';
   if(!amt||amt<=0){qs('#amtInp').focus();return;}
-  const sb=qs('#saveBtn');sb.disabled=true;sb.textContent='Saving...';
   const now=Date.now();
-  try{
-    if(editingItem){
-      const old=(editingItem.type==='in'?entriesIn:entriesOut).find(x=>String(x.id)===String(editingItem.id));
-      const obj={amount:amt,note,date:old?old.date:nowStr(now),updatedAt:now,type};
-      if(editingItem.type!==type){
-        const b=db.batch();
-        b.delete(col(editingItem.type).doc(String(editingItem.id)));
-        b.set(col(type).doc(),obj);await b.commit();
-      }else{await col(type).doc(String(editingItem.id)).set(obj);}
+  const ed=editingItem;          // closeModal() se pehle copy
+  const wasEdit=!!ed;
+  const onErr=()=>setSync('🔴 Offline','var(--red)');
+
+  if(ed){
+    const old=(ed.type==='in'?entriesIn:entriesOut).find(x=>String(x.id)===String(ed.id));
+    const obj={amount:amt,note,date:old?old.date:nowStr(now),updatedAt:now,type};
+    if(ed.type!==type){
+      const b=db.batch();
+      b.delete(col(ed.type).doc(String(ed.id)));
+      b.set(col(type).doc(),obj);
+      b.commit().catch(onErr);
     }else{
-      await col(type).add({amount:amt,note,date:nowStr(now),updatedAt:now,type});
+      col(type).doc(String(ed.id)).set(obj).catch(onErr);
     }
-    setSync('🟢 Saved','var(--green)');
-    showToast(type, !!editingItem);
-    if(!editingItem){setTimeout(()=>{const list=qs(type==='in'?'#listIn':'#listOut');if(list&&list.firstChild)list.firstChild.classList.add('new');},10);}
-  }catch(err){
-    // Offline fallback
-    if(editingItem){
-      const old=(editingItem.type==='in'?entriesIn:entriesOut).find(x=>String(x.id)===String(editingItem.id));
-      const obj={amount:amt,note,date:old?old.date:nowStr(now),updatedAt:now,type,id:editingItem.id};
-      if(editingItem.type==='in')entriesIn=entriesIn.filter(x=>String(x.id)!==String(editingItem.id));
-      else entriesOut=entriesOut.filter(x=>String(x.id)!==String(editingItem.id));
-      if(type==='in')entriesIn.unshift(obj);else entriesOut.unshift(obj);
-    }else{
-      const obj={amount:amt,note,date:nowStr(now),updatedAt:now,type,id:String(now)};
-      if(type==='in')entriesIn.unshift(obj);else entriesOut.unshift(obj);
-    }
-    saveLocal();renderAll();setSync('🔴 Offline','var(--red)');
+  }else{
+    col(type).add({amount:amt,note,date:nowStr(now),updatedAt:now,type}).catch(onErr);
   }
-  sb.disabled=false;sb.textContent='Save';
+
+  setSync('🟢 Saved','var(--green)');
+  showToast(type,wasEdit);
+  if(!wasEdit){setTimeout(()=>{const list=qs(type==='in'?'#listIn':'#listOut');if(list&&list.firstChild)list.firstChild.classList.add('new');},50);}
   closeModal();
 }
 
-async function deleteEntry(id,type){
+/* FIX: delete mein bhi await nahi */
+function deleteEntry(id,type){
   if(!confirm('Delete karein?'))return;
-  try{await col(type).doc(String(id)).delete();setSync('🟢 Deleted','var(--green)');}
-  catch(e){
-    if(type==='in')entriesIn=entriesIn.filter(x=>String(x.id)!==String(id));
-    else entriesOut=entriesOut.filter(x=>String(x.id)!==String(id));
-    saveLocal();renderAll();
-  }
+  col(type).doc(String(id)).delete()
+    .then(()=>setSync('🟢 Deleted','var(--green)'))
+    .catch(()=>setSync('🔴 Offline','var(--red)'));
 }
 
 /* ══ Amount Field ══ */
@@ -591,7 +565,6 @@ qs('#googleLoginBtn').addEventListener('click',()=>{
   });
 });
 
-// Splash screen — show for 2s then show login/app
 window.addEventListener('load', () => {
   setTimeout(() => {
     document.getElementById('splashScreen').classList.remove('show');
