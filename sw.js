@@ -1,4 +1,4 @@
-const CACHE = 'hisabprem-v1';
+const CACHE = 'hisabprem-v2';
 const ASSETS = [
   './index.html',
   './manifest.json'
